@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isFootwear, mainImage } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
 import { t } from "@/lib/content";
 import { useCart } from "./cart-provider";
@@ -65,19 +66,21 @@ export function CartPanel() {
                       >
                         <div className="grid grid-cols-[64px_1fr_auto] gap-4 border-t border-neutral-100 py-4">
                           <div className="relative h-20 w-16 overflow-hidden rounded-md bg-neutral-50">
-                            <Image
-                              src={line.product.images.front}
-                              alt={line.product.name}
-                              fill
-                              sizes="64px"
-                              unoptimized
-                              className="object-contain object-top"
-                            />
+                            {mainImage(line.product) && (
+                              <Image
+                                src={mainImage(line.product)!}
+                                alt={line.product.name}
+                                fill
+                                sizes="64px"
+                                unoptimized
+                                className={isFootwear(line.product) ? "object-contain p-1" : "object-contain object-top"}
+                              />
+                            )}
                           </div>
 
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-neutral-900">{line.product.name}</p>
-                            <p className="mt-0.5 text-xs text-neutral-400">{t.cart.size} {line.size}</p>
+                            <p className="mt-0.5 text-xs text-neutral-400">{t.cart.size} {line.variant.size}</p>
                             <div className="mt-3 inline-flex items-center rounded-full border border-neutral-200">
                               <button
                                 aria-label={t.cart.decrease}
@@ -90,8 +93,9 @@ export function CartPanel() {
                               <span className="w-6 text-center text-xs tabular-nums">{line.qty}</span>
                               <button
                                 aria-label={t.cart.increase}
+                                disabled={line.qty >= line.variant.stock}
                                 onClick={() => setQty(line.key, line.qty + 1)}
-                                className="grid size-7 cursor-pointer place-items-center text-neutral-600 hover:text-neutral-950"
+                                className="grid size-7 cursor-pointer place-items-center text-neutral-600 hover:text-neutral-950 disabled:cursor-default disabled:opacity-30"
                               >
                                 <Plus className="size-3" />
                               </button>

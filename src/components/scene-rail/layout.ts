@@ -32,15 +32,16 @@ export const wrap = (v: number, min: number, max: number) => {
   return ((((v - min) % range) + range) % range) + min;
 };
 
-export function computeLayout(width: number, height: number, n: number): RailLayout {
+/** `reserve` = px at the bottom kept free (the bar with the text, and room for the hovered garment to grow). */
+export function computeLayout(width: number, height: number, n: number, reserve = 170): RailLayout {
   const spacingW = clamp(width / 7, 104, 220);
   const wantedH = (spacingW * 1.35 * 4) / 3;
-  const maxH = Math.max(200, (height - 170) / MAX_HOVER_SCALE);
+  const maxH = Math.max(200, (height - reserve) / MAX_HOVER_SCALE);
   const itemH = Math.min(wantedH, maxH);
   const itemW = itemH * 0.75;
   const spacing = Math.min(spacingW, itemW / 1.35);
   const needed = Math.ceil(width / spacing) + 4;
-  const count = n * Math.ceil(needed / n);
+  const count = n === 0 ? 0 : n * Math.ceil(needed / n);
   return {
     width,
     height,

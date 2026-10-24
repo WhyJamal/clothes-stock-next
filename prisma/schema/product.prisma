@@ -1,0 +1,125 @@
+// ---------------------------------------------------------------------------
+// Catalog
+//
+// ProductType      - the big group. It decides the size chart, how the item is
+//                    shown in the store and which categories are allowed.
+// ProductCategory  - the kind of item inside a group (hoodie, jeans, sneakers).
+//                    Which category belongs to which type is checked in
+//                    src/config/catalog.config.ts (a database enum cannot do it).
+// ---------------------------------------------------------------------------
+
+/// Top-level group of a product.
+enum ProductType {
+  /// Upper-body clothes: tees, hoodies, jackets. Hang on the rail.
+  TOP
+  /// Lower-body clothes: jeans, trousers, shorts. Hang on the rail.
+  BOTTOM
+  /// Shoes. Stand on the shelf.
+  FOOTWEAR
+}
+
+enum ProductCategory {
+  // TOP
+  T_SHIRT
+  SHIRT
+  SWEATSHIRT
+  HOODIE
+  KNITWEAR
+  BLAZER
+  JACKET
+  COAT
+  // BOTTOM
+  JEANS
+  TROUSERS
+  CARGO
+  JOGGERS
+  SHORTS
+  // FOOTWEAR
+  SNEAKERS
+  BOOTS
+  LOAFERS
+  SANDALS
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  UNISEX
+}
+
+enum ProductStatus {
+  /// Not visible in the store.
+  DRAFT
+  /// Visible and can be bought.
+  ACTIVE
+  /// Hidden, but kept for old orders.
+  ARCHIVED
+}
+
+/// Which side of the product a photo shows. For shoes SIDE is the main photo.
+enum ImageView {
+  FRONT
+  SIDE
+  BACK
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  /// Human readable id used in URLs: "green-hoodie".
+  slug           String          @unique
+  name           String
+  description    String?
+  type           ProductType
+  category       ProductCategory
+  gender         Gender          @default(UNISEX)
+  /// Color name shown to the customer.
+  color          String
+  /// Color for swatches and filters, "#1f3d2b".
+  colorHex       String?
+  /// Current price. The currency is set once for the whole store (src/config/store.config.ts).
+  price          Decimal         @db.Decimal(12, 2)
+  /// Price before the discount. Set it to show the old price crossed out.
+  compareAtPrice Decimal?        @db.Decimal(12, 2)
+  status         ProductStatus   @default(DRAFT)
+  featured       Boolean         @default(false)
+  /// Lower number = earlier in lists.
+  sortOrder      Int             @default(0)
+
+  images   ProductImage[]
+  variants ProductVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, type, sortOrder])
+  @@index([category])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  view      ImageView
+  /// Public path or full URL.
+  url       String
+  alt       String?
+
+  @@unique([productId, view])
+  @@map("product_images")
+}
+
+/// One size of one product. The stock lives here, not in Product.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// "M", "32", "42". Valid values depend on Product.type (see SIZE_CHART).
+  size      String
+  sku       String  @unique
+  stock     Int     @default(0)
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@map("product_variants")
+}

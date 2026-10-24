@@ -18,6 +18,21 @@ export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
 /**
+ * Model Product
+ * 
+ */
+export type Product = Prisma.ProductModel
+/**
+ * Model ProductImage
+ * 
+ */
+export type ProductImage = Prisma.ProductImageModel
+/**
+ * Model ProductVariant
+ * One size of one product. The stock lives here, not in Product.
+ */
+export type ProductVariant = Prisma.ProductVariantModel
+/**
  * Model User
  * 
  */

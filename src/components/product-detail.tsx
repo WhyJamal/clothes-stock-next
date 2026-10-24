@@ -1,36 +1,49 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { Loader2, X } from "lucide-react";
+import { ShoePlaceholder } from "@/components/shelf/shoe-placeholder";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { DETAIL_VIEWS, LOW_STOCK } from "@/config/catalog.config";
+import { discountPercent, imageOf, isFootwear } from "@/lib/catalog";
 import { t } from "@/lib/content";
-import { SIZES, formatPrice, type Product, type ProductView, type Size } from "@/lib/products";
-
-export type Box = { left: number; top: number; width: number; height: number };
+import { formatPrice } from "@/lib/products";
+import { cn } from "@/lib/utils";
+import type { AnyVariant, Box, Product, ViewKey } from "@/types";
 
 type Props = {
   product: Product;
-  /** 0-based position of the product in the collection. */
-  position: number;
-  total: number;
-  /** On-screen box of the garment on the rail: the photo flies from here. */
+  /** On-screen box of the product where it was clicked: the photo flies from here. */
   origin: Box;
   onClose: () => void;
-  onAddToCart: (product: Product, size: Size) => void;
+  onAddToCart: (product: Product, variant: AnyVariant) => void;
 };
 
 const fly = { type: "spring", stiffness: 210, damping: 30 } as const;
 
-export function ProductDetail({ product, position, total, origin, onClose, onAddToCart }: Props) {
+export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) {
   const slotRef = useRef<HTMLDivElement>(null);
   const [target, setTarget] = useState<Box | null>(null);
-  const [view, setView] = useState<ProductView>("front");
-  const [size, setSize] = useState<Size>("S");
   const [adding, setAdding] = useState(false);
   const timer = useRef<number | undefined>(undefined);
+
+  const footwear = isFootwear(product);
+  const variants: AnyVariant[] = product.variants;
+
+  // Photo tabs: the views this type uses, without the ones that have no photo yet.
+  const views = useMemo(
+    () => (DETAIL_VIEWS[product.type] as readonly ViewKey[]).filter((v) => imageOf(product, v)),
+    [product],
+  );
+  const [view, setView] = useState<ViewKey | undefined>(views[0]);
+
+  // Start on the first size that is in stock.
+  const [variantId, setVariantId] = useState<string | null>(() => variants.find((v) => v.stock > 0)?.id ?? null);
+  const variant = variants.find((v) => v.id === variantId) ?? null;
+  const soldOut = variants.every((v) => v.stock === 0);
+  const discount = discountPercent(product);
 
   // Where the photo has to land: the (invisible) slot in the layout.
   useEffect(() => {
@@ -53,18 +66,13 @@ export function ProductDetail({ product, position, total, origin, onClose, onAdd
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const add = () => {
-    if (adding) return;
+    if (adding || !variant) return;
     setAdding(true);
-    timer.current = window.setTimeout(() => onAddToCart(product, size), 800);
+    timer.current = window.setTimeout(() => onAddToCart(product, variant), 800);
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={product.name}
-      className="fixed inset-0 z-50 overflow-hidden"
-    >
+    <div role="dialog" aria-modal="true" aria-label={product.name} className="fixed inset-0 z-50 overflow-hidden">
       {/* white sheet */}
       <motion.div
         className="absolute inset-0 bg-[#fbfafc]"
@@ -77,7 +85,14 @@ export function ProductDetail({ product, position, total, origin, onClose, onAdd
       {/* layout (the photo slot is invisible, the real photo flies into it) */}
       <div className="relative flex h-full flex-col items-center justify-center gap-6 px-6 pb-8 pt-16 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(320px,1fr)] md:gap-10 md:px-16 md:py-12">
         <div className="flex justify-center md:justify-end">
-          <div ref={slotRef} className="aspect-3/4 h-[40dvh] md:h-[min(78dvh,820px)]" />
+          <div
+            ref={slotRef}
+            className={cn(
+              footwear
+                ? "aspect-4/3 w-[min(88vw,460px)] md:w-[min(48vw,760px)]"
+                : "aspect-3/4 h-[40dvh] md:h-[min(78dvh,820px)]",
+            )}
+          />
         </div>
 
         <motion.div
@@ -87,66 +102,97 @@ export function ProductDetail({ product, position, total, origin, onClose, onAdd
           exit={{ opacity: 0, transition: { duration: 0.15 } }}
         >
           <p className="text-[11px] text-neutral-400">
-            {position + 1} / {total}
+            {t.catalog.categories[product.category]} · {t.catalog.genders[product.gender]}
           </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-neutral-900">{product.name}</h2>
-          <p className="mt-1 text-sm font-medium text-neutral-900">{formatPrice(product.price)}</p>
 
-          <div role="tablist" aria-label={t.detail.photo} className="mt-5 flex gap-4 text-xs">
-            {(["front", "back"] as const).map((v) => (
-              <button
-                key={v}
-                role="tab"
-                aria-selected={view === v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "relative cursor-pointer pb-1 text-neutral-400 transition-colors",
-                  view === v && "text-neutral-900",
-                )}
-              >
-                {v === "front" ? t.detail.front : t.detail.back}
-                {view === v && (
-                  <motion.span
-                    layoutId="photo-tab"
-                    className="absolute inset-x-0 bottom-0 h-px bg-neutral-900"
-                  />
-                )}
-              </button>
-            ))}
+          <div className="mt-1 flex items-baseline gap-2 text-sm">
+            <span className="font-medium tabular-nums text-neutral-900">{formatPrice(product.price)}</span>
+            {discount > 0 && product.compareAtPrice && (
+              <>
+                <span className="text-xs tabular-nums text-neutral-400 line-through">
+                  {formatPrice(product.compareAtPrice)}
+                </span>
+                <span className="rounded-full bg-neutral-950 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  {t.catalog.sale(discount)}
+                </span>
+              </>
+            )}
           </div>
 
-          <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400">{t.detail.size}</p>
-          <div role="radiogroup" aria-label={t.detail.size} className="mt-2 flex gap-2">
-            {SIZES.map((s) => (
-              <button
-                key={s}
-                role="radio"
-                aria-checked={size === s}
-                onClick={() => setSize(s)}
-                className={cn(
-                  "grid size-9 cursor-pointer place-items-center rounded-full border text-[11px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2",
-                  size === s
-                    ? "border-neutral-950 bg-neutral-950 text-white"
-                    : "border-neutral-200 text-neutral-700 hover:border-neutral-400",
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+          {product.description && (
+            <p className="mt-3 text-xs leading-relaxed text-neutral-500">{product.description}</p>
+          )}
 
-          <Button size="lg" className="mt-6 w-full rounded-full" onClick={add} disabled={adding}>
+          {views.length > 1 && (
+            <div role="tablist" aria-label={t.detail.photo} className="mt-5 flex gap-4 text-xs">
+              {views.map((v) => (
+                <button
+                  key={v}
+                  role="tab"
+                  aria-selected={view === v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "relative cursor-pointer pb-1 text-neutral-400 transition-colors",
+                    view === v && "text-neutral-900",
+                  )}
+                >
+                  {t.catalog.views[v]}
+                  {view === v && (
+                    <motion.span layoutId="photo-tab" className="absolute inset-x-0 bottom-0 h-px bg-neutral-900" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400">
+            {t.catalog.sizeLabel[product.type]}
+          </p>
+          <div role="radiogroup" aria-label={t.catalog.sizeLabel[product.type]} className="mt-2 flex flex-wrap gap-2">
+            {variants.map((v) => {
+              const out = v.stock === 0;
+              return (
+                <button
+                  key={v.id}
+                  role="radio"
+                  aria-checked={variantId === v.id}
+                  aria-label={out ? `${v.size}, ${t.detail.sizeSoldOut}` : v.size}
+                  disabled={out}
+                  onClick={() => setVariantId(v.id)}
+                  className={cn(
+                    "grid h-9 min-w-9 cursor-pointer place-items-center rounded-full border px-2 text-[11px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2",
+                    variantId === v.id
+                      ? "border-neutral-950 bg-neutral-950 text-white"
+                      : "border-neutral-200 text-neutral-700 hover:border-neutral-400",
+                    out && "cursor-default text-neutral-300 line-through hover:border-neutral-200",
+                  )}
+                >
+                  {v.size}
+                </button>
+              );
+            })}
+          </div>
+          {variant && variant.stock <= LOW_STOCK && (
+            <p className="mt-2 text-[11px] text-neutral-500">{t.detail.lowStock(variant.stock)}</p>
+          )}
+
+          <Button size="lg" className="mt-6 w-full rounded-full" onClick={add} disabled={adding || !variant}>
             {adding ? (
               <>
                 <Loader2 className="size-4 animate-spin" /> {t.detail.adding}
               </>
+            ) : soldOut ? (
+              t.detail.soldOut
+            ) : !variant ? (
+              t.detail.chooseSize
             ) : (
               t.detail.add
             )}
           </Button>
 
           <div className="mt-6 flex items-center justify-between border-t border-neutral-200 pt-4 text-xs text-neutral-600">
-            <span>{product.name}</span>
+            <span>{product.color}</span>
             <a href="#" className="underline-offset-4 hover:underline">
               {t.detail.page}
             </a>
@@ -154,7 +200,7 @@ export function ProductDetail({ product, position, total, origin, onClose, onAdd
         </motion.div>
       </div>
 
-      {/* the photo: flies from the rail to the slot and back */}
+      {/* the photo: flies from where it was clicked to the slot and back */}
       {target && (
         <motion.div
           className="pointer-events-none fixed z-60"
@@ -174,27 +220,32 @@ export function ProductDetail({ product, position, total, origin, onClose, onAdd
           exit="exit"
           transition={fly}
         >
-          {(["front", "back"] as const).map((v) => (
-            <motion.div
-              key={v}
-              className="absolute inset-0"
-              initial={false}
-              animate={{ opacity: view === v ? 1 : 0 }}
-              exit={{ opacity: v === "front" ? 1 : 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <Image
-                src={product.images[v]}
-                alt={v === "front" ? product.name : `${product.name}, ${t.detail.backAlt}`}
-                fill
-                sizes="(min-width: 768px) 640px, 60vw"
-                unoptimized
-                priority
-                draggable={false}
-                className="object-contain"
-              />
-            </motion.div>
-          ))}
+          {views.length === 0 ? (
+            <ShoePlaceholder className="absolute inset-0 size-full" />
+          ) : (
+            views.map((v) => (
+              <motion.div
+                key={v}
+                className="absolute inset-0"
+                initial={false}
+                animate={{ opacity: view === v ? 1 : 0 }}
+                // while closing, show the main photo again so it lands like the one it came from
+                exit={{ opacity: v === views[0] ? 1 : 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Image
+                  src={imageOf(product, v)!}
+                  alt={v === views[0] ? product.name : `${product.name}, ${t.catalog.views[v].toLowerCase()}`}
+                  fill
+                  sizes="(min-width: 768px) 760px, 90vw"
+                  unoptimized
+                  priority
+                  draggable={false}
+                  className="object-contain"
+                />
+              </motion.div>
+            ))
+          )}
         </motion.div>
       )}
 

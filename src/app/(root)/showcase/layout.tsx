@@ -1,10 +1,12 @@
+import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 
 export default function ShowcaseLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#fbfafc]">
+    <div className="flex min-h-dvh flex-col bg-[#fbfafc]">
       <Header />
-      {children}
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

@@ -9,7 +9,60 @@
 * 🟢 You can import this file directly.
 */
 
+export const ProductType = {
+  TOP: 'TOP',
+  BOTTOM: 'BOTTOM',
+  FOOTWEAR: 'FOOTWEAR'
+} as const
+
+export type ProductType = (typeof ProductType)[keyof typeof ProductType]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const ProductCategory = {
+  T_SHIRT: 'T_SHIRT',
+  SHIRT: 'SHIRT',
+  SWEATSHIRT: 'SWEATSHIRT',
+  HOODIE: 'HOODIE',
+  KNITWEAR: 'KNITWEAR',
+  BLAZER: 'BLAZER',
+  JACKET: 'JACKET',
+  COAT: 'COAT',
+  JEANS: 'JEANS',
+  TROUSERS: 'TROUSERS',
+  CARGO: 'CARGO',
+  JOGGERS: 'JOGGERS',
+  SHORTS: 'SHORTS',
+  SNEAKERS: 'SNEAKERS',
+  BOOTS: 'BOOTS',
+  LOAFERS: 'LOAFERS',
+  SANDALS: 'SANDALS'
+} as const
+
+export type ProductCategory = (typeof ProductCategory)[keyof typeof ProductCategory]
+
+
+export const Gender = {
+  MEN: 'MEN',
+  WOMEN: 'WOMEN',
+  UNISEX: 'UNISEX'
+} as const
+
+export type Gender = (typeof Gender)[keyof typeof Gender]
+
+
+export const ProductStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type ProductStatus = (typeof ProductStatus)[keyof typeof ProductStatus]
+
+
+export const ImageView = {
+  FRONT: 'FRONT',
+  SIDE: 'SIDE',
+  BACK: 'BACK'
+} as const
+
+export type ImageView = (typeof ImageView)[keyof typeof ImageView]

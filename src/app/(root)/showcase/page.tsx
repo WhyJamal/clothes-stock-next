@@ -1,12 +1,21 @@
-import { CartPanel } from "@/components/cart/cart-panel";
-import { Storefront } from "@/components/storefront";
-import { products } from "@/lib/products";
+import type { Metadata } from "next";
+import { ShowcaseTabs } from "@/components/showcase-tabs";
+import { isFootwear, isHanging } from "@/lib/catalog";
 import { t } from "@/lib/content";
+import { getProducts } from "@/lib/product-queries";
 
-export default function Showcase() {
+export const metadata: Metadata = { title: t.meta.title, description: t.meta.description };
+
+export default async function Showcase() {
+  const products = await getProducts();
+  const hanging = products.filter(isHanging);
+  const tops = hanging.filter((p) => p.type === "TOP");
+  const bottoms = hanging.filter((p) => p.type === "BOTTOM");
+  const shoes = products.filter(isFootwear);
+
   return (
     <>
-      <section className="shrink-0 px-6 pb-2 pt-6 text-center sm:pt-10">
+      <section className="px-6 pb-2 pt-6 text-center sm:pt-10">
         <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-neutral-800">
           {t.hero.eyebrowA} <span className="mx-2 font-normal text-neutral-300">|</span>
           <span className="font-normal text-neutral-500">{t.hero.eyebrowB}</span>
@@ -19,8 +28,7 @@ export default function Showcase() {
         </h1>
       </section>
 
-      <Storefront products={products} className="min-h-0 flex-1" />
-      <CartPanel />
+      <ShowcaseTabs tops={tops} bottoms={bottoms} shoes={shoes} />
     </>
   );
 }

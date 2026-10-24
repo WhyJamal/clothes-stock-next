@@ -5,15 +5,18 @@ import {
   animate,
   motion,
   useMotionValue,
+  useAnimationFrame,
   useMotionValueEvent,
+  useReducedMotion,
   useSpring,
   useTransform,
   useVelocity,
   type AnimationPlaybackControls,
 } from "motion/react";
 import { ArrowRight } from "lucide-react";
-import { formatPrice, type Product } from "@/lib/products";
+import { formatPrice } from "@/lib/products";
 import { t } from "@/lib/content";
+import type { HangingProduct } from "@/types";
 import { RailItem } from "./rail-item";
 import {
   clamp,
@@ -32,22 +35,33 @@ export type SelectInfo = {
 };
 
 type Props = {
-  products: Product[];
+  products: HangingProduct[];
   /** Called when a garment is clicked (not dragged). */
-  onSelect?: (product: Product, info: SelectInfo) => void;
+  onSelect?: (product: HangingProduct, info: SelectInfo) => void;
   /** Rendered item that is currently opened in the product detail (hidden on the rail). */
   hiddenIndex?: number | null;
+  /** Slow automatic drift in px per second (stops while the pointer is over the rail). 0 = off. */
+  drift?: number;
+  /** Show the hint, the progress line and the text at the bottom. */
+  showBar?: boolean;
   className?: string;
 };
 
 const CLICK_SLOP = 6; // px of movement that still counts as a click
 const BOTTOM_BAR = 84; // px at the bottom that do not react to hover
 
-export function SceneRail({ products, onSelect, hiddenIndex = null, className = "" }: Props) {
+export function SceneRail({
+  products,
+  onSelect,
+  hiddenIndex = null,
+  drift = 0,
+  showBar = true,
+  className = "",
+}: Props) {
   const n = products.length;
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const [layout, setLayout] = useState<RailLayout>(() => computeLayout(1280, 720, n));
+  const [layout, setLayout] = useState<RailLayout>(() => computeLayout(1280, 720, n, showBar ? 170 : 100));
   const layoutMV = useMotionValue<RailLayout>(layout);
 
   // Shared motion values
@@ -77,13 +91,13 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      const next = computeLayout(width, height, n);
+      const next = computeLayout(width, height, n, showBar ? 170 : 100);
       layoutMV.set(next);
       setLayout(next);
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [n, layoutMV]);
+  }, [n, showBar, layoutMV]);
 
   /** Index of the garment closest to the pointer, or -1. */
   const nearest = useCallback(() => {
@@ -173,11 +187,29 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
     setHoveredId(null);
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    inertia.current?.stop();
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    scroll.set(scroll.get() - delta);
-  };
+  // The mouse wheel turns the rail sideways (the page does not scroll while the pointer is over it).
+  // A native, non-passive listener is needed to be allowed to cancel the page scroll.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return; // pinch zoom
+      const unit = e.deltaMode === 1 ? 16 : 1;
+      const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * unit;
+      if (delta === 0) return;
+      e.preventDefault();
+      inertia.current?.stop();
+      scroll.set(scroll.get() - delta);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [scroll]);
+
+  const reduceMotion = useReducedMotion();
+  useAnimationFrame((_, delta) => {
+    if (!drift || reduceMotion || pointer.current.inside || drag.current.on || scroll.isAnimating()) return;
+    scroll.set(scroll.get() - (drift * delta) / 1000);
+  });
 
   const hovered = useMemo(
     () => products.find((p) => p.id === hoveredId) ?? null,
@@ -188,7 +220,7 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
   const thumbLeft = useTransform(() => {
     const l = layoutMV.get();
     const cycle = n * l.spacing;
-    return `${(wrap(-scroll.get(), 0, cycle) / cycle) * 70}%`;
+    return cycle > 0 ? `${(wrap(-scroll.get(), 0, cycle) / cycle) * 70}%` : "0%";
   });
 
   const items = useMemo(() => Array.from({ length: layout.count }, (_, i) => i), [layout.count]);
@@ -205,7 +237,6 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onPointerLeave={onPointerLeave}
-      onWheel={onWheel}
     >
       {/* rail */}
       <svg
@@ -244,6 +275,7 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
       ))}
 
       {/* bottom bar */}
+      {showBar && (
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 px-5 pb-5 sm:px-8 sm:pb-7">
         <div className="min-w-0 flex-1 text-[13px] leading-tight">
           {hovered ? (
@@ -269,6 +301,7 @@ export function SceneRail({ products, onSelect, hiddenIndex = null, className = 
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 }
