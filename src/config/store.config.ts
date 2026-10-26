@@ -1,5 +1,6 @@
 // Store-wide settings. Prices in the database have no currency: it is set once, here.
 export const STORE = {
+  name: "Shimitsu",
   currency: {
     code: "USD",
     symbol: "$",
@@ -8,6 +9,8 @@ export const STORE = {
     /** Digits after the dot in full prices (0 for currencies like UZS). */
     fractionDigits: 2,
   },
+  /** Dates in the admin are shown in this time zone. */
+  timeZone: "Asia/Tashkent",
   /** Free delivery starts from this amount (shown in texts). */
   freeShippingFrom: 150,
 } as const;

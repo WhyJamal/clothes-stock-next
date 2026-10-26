@@ -7,7 +7,6 @@ import { Minus, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isFootwear, mainImage } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
-import { t } from "@/lib/content";
 import { useCart } from "./cart-provider";
 
 export function CartPanel() {
@@ -23,7 +22,7 @@ export function CartPanel() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-label={t.cart.title}>
+        <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-label="Корзина">
           <motion.div
             className="absolute inset-0 bg-neutral-950/25"
             initial={{ opacity: 0 }}
@@ -41,16 +40,16 @@ export function CartPanel() {
           >
             <div className="flex items-center justify-between px-6 py-5">
               <h2 className="text-base font-semibold text-neutral-900">
-                {t.cart.title} <span className="ml-1 text-xs font-normal text-neutral-400">({count})</span>
+                Корзина <span className="ml-1 text-xs font-normal text-neutral-400">({count})</span>
               </h2>
-              <Button variant="ghost" size="icon" onClick={closeCart} aria-label={t.cart.close} autoFocus>
+              <Button variant="ghost" size="icon" onClick={closeCart} aria-label="Закрыть корзину" autoFocus>
                 <X className="size-4" />
               </Button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6">
               {lines.length === 0 ? (
-                <p className="mt-16 text-center text-sm text-neutral-400">{t.cart.empty}</p>
+                <p className="mt-16 text-center text-sm text-neutral-400">Ваша корзина пуста.</p>
               ) : (
                 <ul>
                   <AnimatePresence initial={false}>
@@ -80,10 +79,10 @@ export function CartPanel() {
 
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-neutral-900">{line.product.name}</p>
-                            <p className="mt-0.5 text-xs text-neutral-400">{t.cart.size} {line.variant.size}</p>
+                            <p className="mt-0.5 text-xs text-neutral-400">Размер {line.variant.size}</p>
                             <div className="mt-3 inline-flex items-center rounded-full border border-neutral-200">
                               <button
-                                aria-label={t.cart.decrease}
+                                aria-label="Уменьшить количество"
                                 disabled={line.qty <= 1}
                                 onClick={() => setQty(line.key, line.qty - 1)}
                                 className="grid size-7 cursor-pointer place-items-center text-neutral-600 hover:text-neutral-950 disabled:cursor-default disabled:opacity-30"
@@ -92,7 +91,7 @@ export function CartPanel() {
                               </button>
                               <span className="w-6 text-center text-xs tabular-nums">{line.qty}</span>
                               <button
-                                aria-label={t.cart.increase}
+                                aria-label="Увеличить количество"
                                 disabled={line.qty >= line.variant.stock}
                                 onClick={() => setQty(line.key, line.qty + 1)}
                                 className="grid size-7 cursor-pointer place-items-center text-neutral-600 hover:text-neutral-950 disabled:cursor-default disabled:opacity-30"
@@ -107,7 +106,7 @@ export function CartPanel() {
                               {formatPrice(line.product.price * line.qty)}
                             </p>
                             <button
-                              aria-label={`${t.cart.remove}: ${line.product.name}`}
+                              aria-label={`Удалить: ${line.product.name}`}
                               onClick={() => remove(line.key)}
                               className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                             >
@@ -124,12 +123,12 @@ export function CartPanel() {
 
             <div className="border-t border-neutral-100 px-6 pb-6 pt-4">
               <div className="flex items-baseline justify-between text-sm">
-                <span className="text-neutral-500">{t.cart.total}</span>
+                <span className="text-neutral-500">Итого</span>
                 <span className="font-semibold tabular-nums text-neutral-900">{formatPrice(total)}</span>
               </div>
-              <p className="mt-1 text-[11px] text-neutral-400">{t.cart.note}</p>
+              <p className="mt-1 text-[11px] text-neutral-400">Налоги и доставка рассчитываются при оформлении.</p>
               <Button size="lg" className="mt-4 w-full rounded-full" disabled={lines.length === 0}>
-                {t.cart.checkout}
+                Оформить заказ
               </Button>
             </div>
           </motion.aside>

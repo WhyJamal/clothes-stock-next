@@ -1,10 +1,11 @@
 import { STORE } from "@/config/store.config";
-import { t } from "@/lib/content";
 import { formatPriceShort } from "@/lib/products";
+
+const MARQUEE = ["Плотный футер", "Свободный крой", "Возврат в течение 14 дней", "Сделано надолго"];
 
 /** A black line of short facts that scrolls without end. */
 export function Marquee() {
-  const items = [...t.home.marquee, t.home.marqueeShipping(formatPriceShort(STORE.freeShippingFrom))];
+  const items = [...MARQUEE, `Бесплатная доставка от ${formatPriceShort(STORE.freeShippingFrom)}`];
 
   // The list is printed twice and moved by exactly half its width, so the loop has no seam.
   const row = (hidden: boolean) => (

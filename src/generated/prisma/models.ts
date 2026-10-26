@@ -11,5 +11,6 @@
 export type * from './models/Product'
 export type * from './models/ProductImage'
 export type * from './models/ProductVariant'
+export type * from './models/StockMovement'
 export type * from './models/User'
 export type * from './commonInputTypes'

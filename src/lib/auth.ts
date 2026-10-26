@@ -64,10 +64,19 @@ export const authOptions: NextAuthOptions = {
       } else if (user) {
         token.id = user.id;
       }
+      // The role is read when the user signs in and only decides whether the admin link is shown.
+      // Every admin page and action asks the database again (see src/lib/admin.ts).
+      if (token.id && (user || account)) {
+        const row = await prisma.user.findUnique({ where: { id: token.id }, select: { role: true } });
+        token.role = row?.role ?? "USER";
+      }
       return token;
     },
     session({ session, token }) {
-      if (session.user && token.id) session.user.id = token.id;
+      if (session.user && token.id) {
+        session.user.id = token.id;
+        session.user.role = token.role ?? "USER";
+      }
       return session;
     },
   },

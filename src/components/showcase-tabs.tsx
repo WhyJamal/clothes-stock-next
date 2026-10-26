@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { ProductShelf } from "@/components/shelf/product-shelf";
 import { Storefront } from "@/components/storefront";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { t } from "@/lib/content";
 import type { FootwearProduct, HangingProduct } from "@/types";
 
 type Tab = "top" | "bottom" | "footwear";
@@ -21,7 +20,6 @@ type Props = {
  */
 export function ShowcaseTabs({ tops, bottoms, shoes }: Props) {
   const [tab, setTab] = useState<Tab>("top");
-  const c = t.showcase;
 
   // a link like /showcase#footwear opens the shoes tab
   useEffect(() => {
@@ -34,24 +32,24 @@ export function ShowcaseTabs({ tops, bottoms, shoes }: Props) {
   }, []);
 
   const rails: { value: "top" | "bottom"; products: HangingProduct[]; empty: string }[] = [
-    { value: "top", products: tops, empty: c.emptyTop },
-    { value: "bottom", products: bottoms, empty: c.emptyBottom },
+    { value: "top", products: tops, empty: "Верхняя одежда скоро появится." },
+    { value: "bottom", products: bottoms, empty: "Нижняя одежда скоро появится." },
   ];
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
       <div className="flex justify-center px-6 pt-3">
-        <TabsList aria-label={c.tabsLabel}>
+        <TabsList aria-label="Разделы витрины">
           <TabsTrigger value="top">
-            {c.top}
+            Верхняя одежда
             <span className="tabular-nums opacity-60">{tops.length}</span>
           </TabsTrigger>
           <TabsTrigger value="bottom">
-            {c.bottom}
+            Нижняя одежда
             <span className="tabular-nums opacity-60">{bottoms.length}</span>
           </TabsTrigger>
           <TabsTrigger value="footwear">
-            {c.footwear}
+            Обувь
             <span className="tabular-nums opacity-60">{shoes.length}</span>
           </TabsTrigger>
         </TabsList>

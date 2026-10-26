@@ -3,7 +3,11 @@ import { SIZE_CHART } from "@/config/catalog.config";
 import { categoryBelongsTo, isSizeOf } from "@/lib/catalog";
 import { Gender, ProductCategory, ProductStatus, ProductType } from "@/generated/prisma/enums";
 
-const money = z.number().positive().max(1_000_000_000).multipleOf(0.01);
+const money = z
+  .number("Укажите число.")
+  .positive("Цена должна быть больше нуля.")
+  .max(1_000_000_000, "Слишком большая цена.")
+  .multipleOf(0.01, "Не больше двух знаков после запятой.");
 
 /**
  * The shape of a product when it is created or edited (seed script now, admin panel later).
@@ -16,16 +20,16 @@ const money = z.number().positive().max(1_000_000_000).multipleOf(0.01);
 export function createProductInputSchema({ requireImages = true }: { requireImages?: boolean } = {}) {
   return z
     .object({
-      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "slug: only a-z, 0-9 and dashes"),
-      name: z.string().trim().min(2).max(120),
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Адрес: латиница, цифры и дефис."),
+      name: z.string().trim().min(2, "Название: минимум 2 символа.").max(120, "Название слишком длинное."),
       description: z.string().trim().max(2000).nullable().default(null),
       type: z.enum(ProductType),
       category: z.enum(ProductCategory),
       gender: z.enum(Gender).default(Gender.UNISEX),
-      color: z.string().trim().min(2).max(40),
+      color: z.string().trim().min(2, "Укажите цвет.").max(40, "Слишком длинное название цвета."),
       colorHex: z
         .string()
-        .regex(/^#[0-9a-f]{6}$/i, "colorHex: #rrggbb")
+        .regex(/^#[0-9a-f]{6}$/i, "Оттенок в формате #rrggbb.")
         .nullable()
         .default(null),
       price: money,
@@ -46,14 +50,14 @@ export function createProductInputSchema({ requireImages = true }: { requireImag
             stock: z.number().int().min(0),
           }),
         )
-        .min(1),
+        .min(1, "Выберите хотя бы один размер."),
     })
     .superRefine((p, ctx) => {
       if (!categoryBelongsTo(p.type, p.category)) {
         ctx.addIssue({
           code: "custom",
           path: ["category"],
-          message: `${p.category} is not a ${p.type} category`,
+          message: "Эта категория не подходит к выбранному типу.",
         });
       }
 
@@ -63,11 +67,11 @@ export function createProductInputSchema({ requireImages = true }: { requireImag
           ctx.addIssue({
             code: "custom",
             path: ["variants", i, "size"],
-            message: `size "${v.size}" is not valid for ${p.type} (use: ${SIZE_CHART[p.type].join(", ")})`,
+            message: `Размер «${v.size}» не подходит. Допустимо: ${SIZE_CHART[p.type].join(", ")}.`,
           });
         }
         if (seen.has(v.size)) {
-          ctx.addIssue({ code: "custom", path: ["variants", i, "size"], message: `size "${v.size}" is repeated` });
+          ctx.addIssue({ code: "custom", path: ["variants", i, "size"], message: `Размер «${v.size}» повторяется.` });
         }
         seen.add(v.size);
       });
@@ -76,14 +80,14 @@ export function createProductInputSchema({ requireImages = true }: { requireImag
         ctx.addIssue({
           code: "custom",
           path: ["compareAtPrice"],
-          message: "compareAtPrice must be higher than price",
+          message: "Старая цена должна быть выше текущей.",
         });
       }
 
       if (requireImages && p.type !== ProductType.FOOTWEAR) {
         for (const view of ["front", "side", "back"] as const) {
           if (!p.images[view]) {
-            ctx.addIssue({ code: "custom", path: ["images", view], message: `clothes need a ${view} photo` });
+            ctx.addIssue({ code: "custom", path: ["images", view], message: "Для активной вещи нужны все три фото." });
           }
         }
       }

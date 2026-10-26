@@ -1,4 +1,4 @@
-import { CATEGORIES_BY_TYPE, SIZE_CHART, TYPE_ORDER } from "@/config/catalog.config";
+import { CATEGORIES_BY_TYPE, LOW_STOCK, SIZE_CHART, TYPE_ORDER } from "@/config/catalog.config";
 import type {
   FootwearProduct,
   HangingProduct,
@@ -6,6 +6,7 @@ import type {
   ProductCategory,
   ProductType,
   SizeOf,
+  StockLevel,
   TypeSummary,
   ViewKey,
 } from "@/types";
@@ -58,3 +59,6 @@ export function featuredOf(products: Product[], limit = 8): Product[] {
   const featured = products.filter((p) => p.featured);
   return (featured.length > 0 ? featured : products).slice(0, limit);
 }
+
+/** "out" at 0, "low" up to LOW_STOCK pieces, otherwise "ok". */
+export const stockLevel = (stock: number): StockLevel => (stock <= 0 ? "out" : stock <= LOW_STOCK ? "low" : "ok");

@@ -1,10 +1,19 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hash } from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { Gender, ProductCategory, ProductStatus, ProductType } from "../src/generated/prisma/enums";
+import {
+  Gender,
+  ProductCategory,
+  ProductStatus,
+  ProductType,
+  Role,
+  StockMovementType,
+} from "../src/generated/prisma/enums";
 import { createProductInputSchema, type ProductInput } from "../src/lib/product-schema";
 
 // npm run db:seed. Safe to run again: products are matched by slug and rewritten.
+// Sizes that already exist are NOT touched, so the stock and its history survive a re-seed.
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -100,7 +109,28 @@ const footwear: ProductInput[] = [
   }),
 ];
 
+/** The first admin: set ADMIN_EMAIL and ADMIN_PASSWORD in .env, the seed creates (or promotes) that user. */
+async function seedAdmin() {
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log("· no admin: set ADMIN_EMAIL and ADMIN_PASSWORD in .env, or run `npm run db:admin -- you@mail.com`");
+    return;
+  }
+  if (password.length < 8) throw new Error("ADMIN_PASSWORD must have at least 8 characters");
+
+  await prisma.user.upsert({
+    where: { email },
+    create: { email, name: "Admin", passwordHash: await hash(password, 12), role: Role.ADMIN },
+    // an existing account keeps its password, it only gets the role
+    update: { role: Role.ADMIN },
+  });
+  console.log(`✓ admin: ${email}`);
+}
+
 async function main() {
+  await seedAdmin();
+
   // Clothes may wait for their photos (kept as DRAFT); the other rules always apply.
   const schema = createProductInputSchema({ requireImages: false });
   const all = [...clothes, ...footwear].map((input) => schema.parse(input));
@@ -115,18 +145,48 @@ async function main() {
       .filter((e): e is ["front" | "side" | "back", string] => Boolean(e[1]))
       .map(([view, url]) => ({ view: view.toUpperCase() as "FRONT" | "SIDE" | "BACK", url, alt: p.name }));
 
-    await prisma.$transaction(async (tx) => {
-      const product = await tx.product.upsert({
-        where: { slug: p.slug },
-        create: { ...fields, status },
-        update: { ...fields, status },
-      });
-      // rewrite photos and sizes so a second run gives the same result
-      await tx.productImage.deleteMany({ where: { productId: product.id } });
-      await tx.productVariant.deleteMany({ where: { productId: product.id } });
-      await tx.productImage.createMany({ data: imageRows.map((r) => ({ ...r, productId: product.id })) });
-      await tx.productVariant.createMany({ data: sizes.map((v) => ({ ...v, productId: product.id })) });
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        const product = await tx.product.upsert({
+          where: { slug: p.slug },
+          create: { ...fields, status },
+          update: { ...fields, status },
+        });
+        // photos are rewritten, so a second run gives the same result
+        await tx.productImage.deleteMany({ where: { productId: product.id } });
+        await tx.productImage.createMany({ data: imageRows.map((r) => ({ ...r, productId: product.id })) });
+
+        // sizes are only added: the warehouse owns the stock of the ones that exist
+        for (const v of sizes) {
+          const existing = await tx.productVariant.findUnique({
+            where: { productId_size: { productId: product.id, size: v.size } },
+          });
+          if (existing) continue;
+          await tx.productVariant.create({
+            data: {
+              ...v,
+              productId: product.id,
+              movements:
+                v.stock > 0
+                  ? {
+                    create: {
+                      type: StockMovementType.INITIAL,
+                      delta: v.stock,
+                      balanceAfter: v.stock,
+                      note: "Начальный остаток (seed)",
+                    },
+                  }
+                  : undefined,
+            },
+          });
+        }
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      }
+    );
+
     console.log(`${status === ProductStatus.ACTIVE ? "✓" : "·"} ${p.slug} (${status})`);
   }
   console.log(`Seeded ${all.length} products.`);

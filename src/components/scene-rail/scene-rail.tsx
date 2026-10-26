@@ -15,7 +15,6 @@ import {
 } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/products";
-import { t } from "@/lib/content";
 import type { HangingProduct } from "@/types";
 import { RailItem } from "./rail-item";
 import {
@@ -230,7 +229,7 @@ export function SceneRail({
     <div
       ref={rootRef}
       role="region"
-      aria-label={t.rail.label}
+      aria-label="Рейл с одеждой: листайте мышью, наведите на вещь, чтобы развернуть её"
       className={`relative cursor-grab touch-pan-y select-none overflow-hidden active:cursor-grabbing ${className}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -284,7 +283,7 @@ export function SceneRail({
               <p className="mt-0.5 text-neutral-500">{formatPrice(hovered.price)}</p>
             </>
           ) : (
-            <p className="text-xs text-neutral-400">{t.rail.hint}</p>
+            <p className="text-xs text-neutral-400">Наведите на вещь · листайте, чтобы рассмотреть</p>
           )}
         </div>
 
@@ -294,10 +293,10 @@ export function SceneRail({
 
         <div className="hidden min-w-0 flex-1 flex-col items-end gap-1.5 text-right text-xs sm:flex">
           <p className="max-w-52.5 font-semibold leading-snug text-neutral-900">
-            {t.rail.blurb}
+            Плотный футер. Свободный крой. Сделано надолго.
           </p>
           <span className="pointer-events-auto inline-flex items-center gap-1.5 border-b border-neutral-900 pb-px font-medium text-neutral-900">
-            {t.rail.shop} <ArrowRight className="size-3" />
+            Смотреть коллекцию <ArrowRight className="size-3" />
           </span>
         </div>
       </div>

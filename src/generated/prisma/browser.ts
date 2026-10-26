@@ -33,6 +33,11 @@ export type ProductImage = Prisma.ProductImageModel
  */
 export type ProductVariant = Prisma.ProductVariantModel
 /**
+ * Model StockMovement
+ * 
+ */
+export type StockMovement = Prisma.StockMovementModel
+/**
  * Model User
  * 
  */

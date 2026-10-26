@@ -8,10 +8,14 @@ import { ShoePlaceholder } from "@/components/shelf/shoe-placeholder";
 import { Button } from "@/components/ui/button";
 import { DETAIL_VIEWS, LOW_STOCK } from "@/config/catalog.config";
 import { discountPercent, imageOf, isFootwear } from "@/lib/catalog";
-import { t } from "@/lib/content";
+import { CATEGORY_LABEL, GENDER_LABEL } from "@/lib/labels";
 import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import type { AnyVariant, Box, Product, ViewKey } from "@/types";
+
+const VIEWS = { front: "Спереди", side: "Сбоку", back: "Сзади" };
+
+const SIZE_LABEL = { TOP: "Размер", BOTTOM: "Размер (талия)", FOOTWEAR: "Размер (EU)" };
 
 type Props = {
   product: Product;
@@ -102,7 +106,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
           exit={{ opacity: 0, transition: { duration: 0.15 } }}
         >
           <p className="text-[11px] text-neutral-400">
-            {t.catalog.categories[product.category]} · {t.catalog.genders[product.gender]}
+            {CATEGORY_LABEL[product.category]} · {GENDER_LABEL[product.gender]}
           </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-neutral-900">{product.name}</h2>
 
@@ -114,7 +118,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
                   {formatPrice(product.compareAtPrice)}
                 </span>
                 <span className="rounded-full bg-neutral-950 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                  {t.catalog.sale(discount)}
+                  {`−${discount}%`}
                 </span>
               </>
             )}
@@ -125,7 +129,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
           )}
 
           {views.length > 1 && (
-            <div role="tablist" aria-label={t.detail.photo} className="mt-5 flex gap-4 text-xs">
+            <div role="tablist" aria-label="Фото" className="mt-5 flex gap-4 text-xs">
               {views.map((v) => (
                 <button
                   key={v}
@@ -137,7 +141,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
                     view === v && "text-neutral-900",
                   )}
                 >
-                  {t.catalog.views[v]}
+                  {VIEWS[v]}
                   {view === v && (
                     <motion.span layoutId="photo-tab" className="absolute inset-x-0 bottom-0 h-px bg-neutral-900" />
                   )}
@@ -147,9 +151,9 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
           )}
 
           <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400">
-            {t.catalog.sizeLabel[product.type]}
+            {SIZE_LABEL[product.type]}
           </p>
-          <div role="radiogroup" aria-label={t.catalog.sizeLabel[product.type]} className="mt-2 flex flex-wrap gap-2">
+          <div role="radiogroup" aria-label={SIZE_LABEL[product.type]} className="mt-2 flex flex-wrap gap-2">
             {variants.map((v) => {
               const out = v.stock === 0;
               return (
@@ -157,7 +161,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
                   key={v.id}
                   role="radio"
                   aria-checked={variantId === v.id}
-                  aria-label={out ? `${v.size}, ${t.detail.sizeSoldOut}` : v.size}
+                  aria-label={out ? `${v.size}, нет в наличии` : v.size}
                   disabled={out}
                   onClick={() => setVariantId(v.id)}
                   className={cn(
@@ -174,27 +178,27 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
             })}
           </div>
           {variant && variant.stock <= LOW_STOCK && (
-            <p className="mt-2 text-[11px] text-neutral-500">{t.detail.lowStock(variant.stock)}</p>
+            <p className="mt-2 text-[11px] text-neutral-500">{`Осталось ${variant.stock} шт.`}</p>
           )}
 
           <Button size="lg" className="mt-6 w-full rounded-full" onClick={add} disabled={adding || !variant}>
             {adding ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> {t.detail.adding}
+                <Loader2 className="size-4 animate-spin" /> Добавляем…
               </>
             ) : soldOut ? (
-              t.detail.soldOut
+              "Нет в наличии"
             ) : !variant ? (
-              t.detail.chooseSize
+              "Выберите размер"
             ) : (
-              t.detail.add
+              "В корзину"
             )}
           </Button>
 
           <div className="mt-6 flex items-center justify-between border-t border-neutral-200 pt-4 text-xs text-neutral-600">
             <span>{product.color}</span>
             <a href="#" className="underline-offset-4 hover:underline">
-              {t.detail.page}
+              Страница товара
             </a>
           </div>
         </motion.div>
@@ -235,7 +239,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
               >
                 <Image
                   src={imageOf(product, v)!}
-                  alt={v === views[0] ? product.name : `${product.name}, ${t.catalog.views[v].toLowerCase()}`}
+                  alt={v === views[0] ? product.name : `${product.name}, ${VIEWS[v].toLowerCase()}`}
                   fill
                   sizes="(min-width: 768px) 760px, 90vw"
                   unoptimized
@@ -256,7 +260,7 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
         exit={{ opacity: 0, transition: { duration: 0.1 } }}
       >
         <Button variant="outline" size="sm" className="rounded-none" onClick={onClose} autoFocus>
-          {t.detail.close} <X className="size-3.5" />
+          Закрыть <X className="size-3.5" />
         </Button>
       </motion.div>
     </div>

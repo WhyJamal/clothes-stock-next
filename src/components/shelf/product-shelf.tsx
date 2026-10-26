@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
 import { SHELF_ROWS } from "@/config/catalog.config";
 import { useDragScroll } from "@/hooks/use-drag-scroll";
-import { t } from "@/lib/content";
 import { discountPercent, totalStock } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
@@ -47,26 +46,26 @@ export function ProductShelf({ products, className }: Props) {
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
           <div>
             <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
-              {t.shelf.eyebrow}
+              Обувь
             </p>
             <h2
               id="footwear-title"
               className="mt-2 text-[clamp(26px,3.4vw,40px)] font-semibold leading-none tracking-[-0.04em] text-neutral-900"
             >
-              {t.shelf.title}
+              Стойка с обувью
             </h2>
           </div>
-          <p className="max-w-xs text-xs leading-relaxed text-neutral-500">{t.shelf.hint}</p>
+          <p className="max-w-xs text-xs leading-relaxed text-neutral-500">Листайте ряды вбок, нажмите на пару, чтобы рассмотреть</p>
         </div>
 
         {rows.length === 0 ? (
           <p className="mt-8 rounded-3xl bg-[#f1f0f3] px-6 py-16 text-center text-sm text-neutral-400">
-            {t.shelf.empty}
+            Обувь скоро появится.
           </p>
         ) : (
           <div className="mt-8 space-y-3 rounded-[2rem] bg-[#f1f0f3] py-8 [--shoe-w:clamp(190px,24vw,300px)]">
             {rows.map((row, i) => (
-              <ShelfRow key={i} label={t.shelf.row(i + 1)} products={row} hiddenId={hiddenId} onOpen={open} />
+              <ShelfRow key={i} label={`Ряд ${i + 1}`} products={row} hiddenId={hiddenId} onOpen={open} />
             ))}
           </div>
         )}
@@ -164,7 +163,7 @@ function ShoeCard({
           {formatPrice(product.price)}
           {discount > 0 && (
             <span className="rounded-full bg-neutral-950 px-1.5 py-px text-[9px] font-medium text-white">
-              {t.catalog.sale(discount)}
+              {`−${discount}%`}
             </span>
           )}
         </p>

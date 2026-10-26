@@ -1,3 +1,9 @@
+enum Role {
+  USER
+  /// Can open /admin: add products and manage the warehouse.
+  ADMIN
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -5,8 +11,11 @@ model User {
   // null for accounts created through Google
   passwordHash String?
   image        String?
+  role         Role     @default(USER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  stockMovements StockMovement[]
 
   @@map("users")
 }

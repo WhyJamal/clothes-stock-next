@@ -6,7 +6,6 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PAGES } from "@/config/pages.config";
-import { t } from "@/lib/content";
 
 function GoogleIcon() {
   return (
@@ -37,12 +36,12 @@ export function GoogleButton({ disabled }: { disabled?: boolean }) {
         }}
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : <GoogleIcon />}
-        {t.auth.google}
+        Продолжить с Google
       </Button>
 
       <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-neutral-400">
         <Separator className="flex-1 bg-neutral-200" />
-        {t.auth.or}
+        или
         <Separator className="flex-1 bg-neutral-200" />
       </div>
     </>

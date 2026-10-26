@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ShoePlaceholder } from "@/components/shelf/shoe-placeholder";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
 import { discountPercent, isFootwear, mainImage, totalStock } from "@/lib/catalog";
-import { t } from "@/lib/content";
+import { CATEGORY_LABEL } from "@/lib/labels";
 import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -64,18 +64,18 @@ export function ProductCard({ product, priority }: { product: Product; priority?
         <div className="absolute left-3 top-3 flex gap-1.5">
           {discount > 0 && (
             <span className="rounded-full bg-neutral-950 px-2 py-1 text-[10px] font-medium text-white">
-              {t.catalog.sale(discount)}
+              {`−${discount}%`}
             </span>
           )}
           {soldOut && (
             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-neutral-600">
-              {t.detail.soldOut}
+              Нет в наличии
             </span>
           )}
         </div>
       </div>
 
-      <p className="mt-3 text-[11px] text-neutral-400">{t.catalog.categories[product.category]}</p>
+      <p className="mt-3 text-[11px] text-neutral-400">{CATEGORY_LABEL[product.category]}</p>
       <p className="mt-0.5 truncate text-sm font-medium text-neutral-900">{product.name}</p>
       <p className="mt-0.5 flex items-baseline gap-2 text-xs tabular-nums text-neutral-900">
         {formatPrice(product.price)}

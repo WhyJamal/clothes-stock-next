@@ -66,3 +66,23 @@ export const ImageView = {
 } as const
 
 export type ImageView = (typeof ImageView)[keyof typeof ImageView]
+
+
+export const StockMovementType = {
+  INITIAL: 'INITIAL',
+  RECEIPT: 'RECEIPT',
+  ADJUSTMENT: 'ADJUSTMENT',
+  WRITE_OFF: 'WRITE_OFF',
+  SALE: 'SALE',
+  RETURN: 'RETURN'
+} as const
+
+export type StockMovementType = (typeof StockMovementType)[keyof typeof StockMovementType]
+
+
+export const Role = {
+  USER: 'USER',
+  ADMIN: 'ADMIN'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]

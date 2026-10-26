@@ -5,9 +5,17 @@ import { ShoePlaceholder } from "@/components/shelf/shoe-placeholder";
 import { TYPE_ORDER } from "@/config/catalog.config";
 import { PAGES } from "@/config/pages.config";
 import { mainImage } from "@/lib/catalog";
-import { t } from "@/lib/content";
+import { TYPE_HINT, TYPE_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { ProductType, TypeSummary } from "@/types";
+
+function plural(n: number, one: string, few: string, many: string) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
 
 const href: Record<ProductType, string> = {
   TOP: `${PAGES.SHOWCASE}#rail`,
@@ -23,13 +31,11 @@ const tint: Record<ProductType, string> = {
 
 /** "Верх / Низ / Обувь": one big tile for every product type. */
 export function TypeTiles({ summary }: { summary: TypeSummary }) {
-  const c = t.home.types;
-
   return (
     <section id="catalog" className="mx-auto mt-20 max-w-350 scroll-mt-6 px-6">
-      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-neutral-500">{c.eyebrow}</p>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-neutral-500">Каталог</p>
       <h2 className="mt-2 text-[clamp(26px,3.4vw,40px)] leading-none font-semibold tracking-[-0.04em] text-neutral-900">
-        {c.title}
+        Выберите слой
       </h2>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -51,9 +57,9 @@ export function TypeTiles({ summary }: { summary: TypeSummary }) {
             >
               <span className="text-[11px] tabular-nums text-neutral-400">{String(i + 1).padStart(2, "0")}</span>
               <h3 className="mt-1 text-3xl leading-none font-semibold tracking-[-0.04em] text-neutral-900">
-                {t.catalog.types[type]}
+                {TYPE_LABEL[type]}
               </h3>
-              <p className="mt-2 max-w-[16rem] text-xs leading-relaxed text-neutral-500">{t.catalog.typeHints[type]}</p>
+              <p className="mt-2 max-w-[16rem] text-xs leading-relaxed text-neutral-500">{TYPE_HINT[type]}</p>
 
               {/* the photo stands on the bottom edge of the tile */}
               <div
@@ -80,7 +86,7 @@ export function TypeTiles({ summary }: { summary: TypeSummary }) {
 
               <div className="absolute inset-x-6 bottom-6 flex items-end justify-between sm:inset-x-7 sm:bottom-7">
                 <span className="rounded-full bg-white/80 px-3 py-1.5 text-[11px] text-neutral-700 backdrop-blur">
-                  {available ? c.count(count) : c.soon}
+                  {available ? `${count} ${plural(count, "модель", "модели", "моделей")}` : "Скоро в продаже"}
                 </span>
                 {available && (
                   <span className="grid size-10 place-items-center rounded-full bg-neutral-950 text-white transition-transform duration-300 group-hover:rotate-45">

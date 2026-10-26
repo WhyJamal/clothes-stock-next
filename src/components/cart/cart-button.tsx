@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { ShoppingBag } from "lucide-react";
-import { t } from "@/lib/content";
 import { useCart } from "./cart-provider";
 
 export function CartButton() {
@@ -12,7 +11,7 @@ export function CartButton() {
     <button
       ref={cartButtonRef}
       onClick={openCart}
-      aria-label={`${t.cart.title}, ${count} ${t.cart.items}`}
+      aria-label={`Корзина, ${count} шт.`}
       className="relative cursor-pointer rounded-full p-1 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
     >
       <ShoppingBag className="size-4" />
