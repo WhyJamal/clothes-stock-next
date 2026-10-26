@@ -3,7 +3,6 @@
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signUpSchema } from "@/lib/validation";
-import { t } from "@/lib/content";
 
 type Field = "name" | "email" | "password" | "confirm";
 
@@ -32,7 +31,7 @@ export async function registerAction(formData: FormData): Promise<RegisterResult
 
   try {
     const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) return { ok: false, fields: { email: t.auth.errors.exists } };
+    if (exists) return { ok: false, fields: { email: "Этот email уже зарегистрирован." } };
 
     await prisma.user.create({
       data: { name, email, passwordHash: await hash(password, 12) },
@@ -41,9 +40,9 @@ export async function registerAction(formData: FormData): Promise<RegisterResult
   } catch (err) {
     // unique constraint hit by a parallel request
     if (typeof err === "object" && err && "code" in err && err.code === "P2002") {
-      return { ok: false, fields: { email: t.auth.errors.exists } };
+      return { ok: false, fields: { email: "Этот email уже зарегистрирован." } };
     }
     console.error("register failed", err);
-    return { ok: false, error: t.auth.errors.generic };
+    return { ok: false, error: "Что-то пошло не так. Попробуйте ещё раз." };
   }
 }

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { SignInCard } from "@/components/auth/sign-in-card";
-import { t } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: t.auth.signIn.metaTitle,
+  title: "Shimitsu · Вход",
 };
 
 export default function SignInPage() {

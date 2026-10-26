@@ -42,7 +42,7 @@ export function ProductShelf({ products, className }: Props) {
 
   return (
     <section id="footwear" className={cn("scroll-mt-4", className)} aria-labelledby="footwear-title">
-      <div className="mx-auto max-w-350 px-6">
+      <div className="mx-auto w-full">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
           <div>
             <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
@@ -63,7 +63,7 @@ export function ProductShelf({ products, className }: Props) {
             Обувь скоро появится.
           </p>
         ) : (
-          <div className="mt-8 space-y-3 rounded-[2rem] bg-[#f1f0f3] py-8 [--shoe-w:clamp(190px,24vw,300px)]">
+          <div className="mt-8 space-y-2 py-8 bg-[radial-gradient(120%_80%_at_50%_0%,#f9f8fb,#eceaf1)] [--shoe-w:clamp(190px,24vw,300px)]">
             {rows.map((row, i) => (
               <ShelfRow key={i} label={`Ряд ${i + 1}`} products={row} hiddenId={hiddenId} onOpen={open} />
             ))}
@@ -88,31 +88,23 @@ function ShelfRow({
   const { ref, bind } = useDragScroll<HTMLUListElement>();
 
   return (
-    <div className="relative">
-      {/* the board the shoes stand on */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-5 h-3.5 rounded-full bg-linear-to-b from-white to-[#e2e1e8] shadow-[0_14px_20px_-10px_rgba(30,30,60,0.35),inset_0_1px_0_rgba(255,255,255,0.9)]"
-        style={{ top: "calc(1.75rem + var(--shoe-w) * 0.75 - 3px)" }}
-      />
-
-      <ul
-        ref={ref}
-        {...bind}
-        aria-label={label}
-        className="scrollbar-none relative flex cursor-grab touch-pan-x gap-6 overflow-x-auto px-8 pb-1 select-none active:cursor-grabbing mask-[linear-gradient(to_right,transparent,#000_4%,#000_96%,transparent)]"
-      >
-        {/* auto margins on the first and last pair: a short row is centred, a long one starts at the left */}
-        {products.map((p) => (
-          <li key={p.id} className="shrink-0 first:ml-auto last:mr-auto">
-            <ShoeCard product={p} hidden={hiddenId === p.id} onOpen={onOpen} />
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul
+      ref={ref}
+      {...bind}
+      aria-label={label}
+      className="scrollbar-none relative flex cursor-grab touch-pan-x gap-8 overflow-x-auto px-8 pb-2 select-none active:cursor-grabbing mask-[linear-gradient(to_right,transparent,#000_4%,#000_96%,transparent)]"
+    >
+      {/* auto margins on the first and last pair: a short row is centred, a long one starts at the left */}
+      {products.map((p) => (
+        <li key={p.id} className="shrink-0 first:ml-auto last:mr-auto">
+          <ShoeCard product={p} hidden={hiddenId === p.id} onOpen={onOpen} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
+/** One pair on its own round pedestal: the shoe rises on hover and its shadow shrinks. */
 function ShoeCard({
   product,
   hidden,
@@ -129,13 +121,14 @@ function ShoeCard({
   return (
     <button
       type="button"
-      className="group block w-(--shoe-w) cursor-pointer pt-7 text-left outline-none"
+      className="group block w-(--shoe-w) cursor-pointer pt-7 text-left outline-none [--ped-top:clamp(22px,2.4vw,30px)] [--sink:1.5]"
       onClick={(e) => onOpen(product, e.currentTarget.querySelector<HTMLElement>("[data-photo]")!.getBoundingClientRect())}
     >
+      {/* the shoe */}
       <div
         data-photo
         className={cn(
-          "relative aspect-4/3 w-full origin-bottom transition duration-300 ease-out group-hover:-translate-y-2 group-hover:scale-[1.06] group-focus-visible:-translate-y-2 group-focus-visible:scale-[1.06]",
+          "relative z-20 aspect-4/3 w-full origin-bottom transition duration-500 ease-out group-hover:-translate-y-3 group-hover:scale-[1.05] group-focus-visible:-translate-y-3 group-focus-visible:scale-[1.05]",
           hidden && "opacity-0 transition-none",
           soldOut && "opacity-60",
         )}
@@ -148,14 +141,43 @@ function ShoeCard({
             sizes="300px"
             unoptimized
             draggable={false}
-            className="object-contain object-bottom drop-shadow-[0_10px_8px_rgba(20,20,40,0.18)]"
+            className="object-contain object-bottom"
           />
         ) : (
           <ShoePlaceholder className="absolute inset-0 size-full" />
         )}
       </div>
 
-      <div className="mt-6 px-1 text-center">
+      {/* its own pedestal: a round top, a side with light and shade, a soft shadow on the floor */}
+      <div aria-hidden className="relative z-10 mx-auto -mt-[calc(var(--ped-top)*var(--sink))] h-[calc(var(--ped-top)*2)] w-[86%]">
+        <div className="absolute inset-x-[3%] -bottom-1.5 h-[calc(var(--ped-top)*0.8)] rounded-full bg-neutral-900/30 blur-md" />
+
+        <div
+          className="absolute inset-x-0 top-[calc(var(--ped-top)/2)] bottom-0"
+          style={{
+            background: "linear-gradient(90deg,#c9c7d3 0%,#f3f2f7 30%,#e4e3eb 62%,#c3c1ce 100%)",
+            borderRadius: "0 0 50% 50% / 0 0 calc(var(--ped-top) / 2) calc(var(--ped-top) / 2)",
+          }}
+        />
+
+        <div
+          className="absolute inset-x-0 top-0 h-(--ped-top) rounded-[50%]"
+          style={{
+            background: "radial-gradient(ellipse at 50% 35%,#ffffff 0%,#f2f1f6 55%,#dddce5 100%)",
+            boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.8), 0 1px 2px rgba(30,30,60,0.18)",
+          }}
+        >
+          {/* where the shoe touches the pedestal */}
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2 h-[48%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-900/35 blur-[6px] transition duration-500 group-hover:scale-x-75 group-hover:opacity-50 group-focus-visible:scale-x-75 group-focus-visible:opacity-50",
+              hidden && "opacity-0 transition-none",
+            )}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 px-1 text-center">
         <p className="truncate text-[13px] font-medium text-neutral-900 group-focus-visible:underline">
           {product.name}
         </p>

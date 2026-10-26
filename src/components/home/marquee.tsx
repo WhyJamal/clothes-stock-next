@@ -20,7 +20,7 @@ export function Marquee() {
   );
 
   return (
-    <div className="mt-6 overflow-hidden bg-neutral-950 py-3.5 text-white">
+    <div className="mt-2 overflow-hidden bg-neutral-950 py-3.5 text-white">
       <div className="marquee-track flex w-max">
         {row(false)}
         {row(true)}
