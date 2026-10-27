@@ -18,6 +18,29 @@ type Props = {
   onChange: (url: string | undefined) => void;
 };
 
+// Vercel does not accept a request body over 4.5 MB, and phone photos are bigger than that.
+// Big photos are shrunk in the browser first (max 1600px, WebP, transparency is kept).
+const SHRINK_ABOVE = 3 * 1024 * 1024;
+
+async function shrink(file: File): Promise<File> {
+  if (file.size <= SHRINK_ABOVE) return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((done) => canvas.toBlob(done, "image/webp", 0.86));
+    return blob ? new File([blob], `${file.name.replace(/\.\w+$/, "")}.webp`, { type: "image/webp" }) : file;
+  } catch {
+    return file;
+  }
+}
+
 /** One photo: pick a file, it is uploaded at once (POST /api/admin/upload) and shown as a preview. */
 export function ImageField({ label, required, folder, value, error, onBusy, onChange }: Props) {
   const input = useRef<HTMLInputElement>(null);
@@ -30,10 +53,12 @@ export function ImageField({ label, required, folder, value, error, onBusy, onCh
     onBusy(true);
     try {
       const body = new FormData();
-      body.set("file", file);
+      body.set("file", await shrink(file));
       body.set("folder", folder);
       const res = await fetch("/api/admin/upload", { method: "POST", body });
-      const json = (await res.json()) as { url?: string; error?: string };
+      if (res.status === 413) throw new Error("Файл слишком большой. Выберите фото поменьше.");
+      // an error page of the platform is not JSON, so it must not crash the parsing
+      const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error ?? "Не удалось сохранить. Попробуйте ещё раз.");
       onChange(json.url);
     } catch (e) {

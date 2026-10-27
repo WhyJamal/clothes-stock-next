@@ -1,6 +1,5 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { UPLOAD_ROOT } from "@/lib/storage";
+import { get } from "@vercel/blob";
+import { blobPathname, isUploadFolder } from "@/lib/storage";
 
 const TYPES: Record<string, string> = {
   ".webp": "image/webp",
@@ -9,23 +8,35 @@ const TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
 };
 
-// Serves the photos that were uploaded in the admin (see src/lib/storage.ts).
-export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
+const notFound = () => new Response("Not found", { status: 404 });
+
+// Serves the product photos from the private Blob store: /uploads/<top|bottom|footwear>/<file>.
+// The photos are public for the shop visitors; only the Blob store itself is private.
+export async function GET(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path: segments } = await params;
+  const [folder, file, ...rest] = segments;
 
-  // only plain file names: no "..", no hidden files
-  if (segments.some((s) => !/^[\w][\w.-]*$/.test(s))) return new Response("Not found", { status: 404 });
+  // exactly folder/file, and only plain file names: no "..", no hidden files
+  if (rest.length > 0 || !isUploadFolder(folder) || !file || !/^[\w][\w.-]*$/.test(file)) return notFound();
+  const type = TYPES[file.slice(file.lastIndexOf(".")).toLowerCase()];
+  if (!type) return notFound();
 
-  const file = path.resolve(UPLOAD_ROOT, ...segments);
-  const type = TYPES[path.extname(file).toLowerCase()];
-  if (!type || !file.startsWith(UPLOAD_ROOT + path.sep)) return new Response("Not found", { status: 404 });
-
+  let result;
   try {
-    const data = await fs.readFile(file);
-    return new Response(new Uint8Array(data), {
-      headers: { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable" },
+    result = await get(blobPathname(folder, file), {
+      access: "private",
+      ifNoneMatch: req.headers.get("if-none-match") ?? undefined,
     });
-  } catch {
-    return new Response("Not found", { status: 404 });
+  } catch (err) {
+    console.error("photo read failed", err);
+    return new Response("Failed to load the photo", { status: 500 });
   }
+  if (!result) return notFound();
+
+  const headers = {
+    ETag: result.blob.etag,
+    "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+  };
+  if (result.statusCode === 304) return new Response(null, { status: 304, headers });
+  return new Response(result.stream, { headers: { ...headers, "Content-Type": type } });
 }
