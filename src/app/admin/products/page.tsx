@@ -3,6 +3,7 @@ export const instant = false;
 import Image from "next/image";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { LevelBadge } from "@/components/admin/level-badge";
 import { PageHeading } from "@/components/admin/admin-shell";
 import { buttonVariants } from "@/components/ui/button";
@@ -120,12 +121,15 @@ export default async function AdminProducts() {
                 </td>
 
                 <td className="px-4 py-2.5 text-right">
-                  <Link
-                    href={`${PAGES.ADMIN_PRODUCTS}/${p.id}`}
-                    className="text-xs text-neutral-900 underline underline-offset-4"
-                  >
-                    Изменить
-                  </Link>
+                  <div className="flex items-center justify-end gap-4">
+                    <Link
+                      href={`${PAGES.ADMIN_PRODUCTS}/${p.id}`}
+                      className="text-xs text-neutral-900 underline underline-offset-4"
+                    >
+                      Изменить
+                    </Link>
+                    <DeleteProductButton id={p.id} name={p.name} variant="link" />
+                  </div>
                 </td>
               </tr>
             ))}

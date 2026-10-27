@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   label: string;
   required?: boolean;
+  /** Blob folder the photo goes to (the product type). */
+  folder: "top" | "bottom" | "footwear";
   value?: string;
   error?: string;
   /** Tells the form that an upload is running, so it can not be saved half-way. */
@@ -17,7 +19,7 @@ type Props = {
 };
 
 /** One photo: pick a file, it is uploaded at once (POST /api/admin/upload) and shown as a preview. */
-export function ImageField({ label, required, value, error, onBusy, onChange }: Props) {
+export function ImageField({ label, required, folder, value, error, onBusy, onChange }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export function ImageField({ label, required, value, error, onBusy, onChange }: 
     try {
       const body = new FormData();
       body.set("file", file);
+      body.set("folder", folder);
       const res = await fetch("/api/admin/upload", { method: "POST", body });
       const json = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error ?? "Не удалось сохранить. Попробуйте ещё раз.");

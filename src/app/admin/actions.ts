@@ -7,6 +7,7 @@ import { PRODUCTS_TAG } from "@/lib/product-queries";
 import { createProductInputSchema } from "@/lib/product-schema";
 import { prisma } from "@/lib/prisma";
 import { changeStock, StockError } from "@/lib/stock";
+import { deleteProductImages } from "@/lib/storage";
 import { StockMovementType, type ImageView } from "@/generated/prisma/enums";
 import type { ProductPayload, SaveProductResult, StockActionInput, StockActionResult, ViewKey } from "@/types";
 
@@ -39,7 +40,10 @@ export async function saveProductAction(payload: ProductPayload): Promise<SavePr
   const existing = payload.id
     ? await prisma.product.findUnique({
         where: { id: payload.id },
-        include: { variants: { select: { size: true, sku: true, stock: true } } },
+        include: {
+          variants: { select: { size: true, sku: true, stock: true } },
+          images: { select: { url: true } },
+        },
       })
     : null;
   if (payload.id && !existing) return { ok: false, errors: {}, message: "Не удалось сохранить. Попробуйте ещё раз." };
@@ -149,6 +153,9 @@ export async function saveProductAction(payload: ProductPayload): Promise<SavePr
         });
       }
     });
+    // photos that were replaced or removed in the form are no longer used: delete them from Blob
+    const kept = new Set(Object.values(d.images));
+    await deleteProductImages(existing.images.map((i) => i.url).filter((u) => !kept.has(u)));
     updateTag(PRODUCTS_TAG);
     return { ok: true, id: existing.id };
   } catch (err) {
@@ -195,4 +202,25 @@ export async function stockAction(input: StockActionInput): Promise<StockActionR
     console.error("stockAction failed", err);
     return { ok: false, error: "Не удалось изменить остаток." };
   }
+}
+
+/** Deletes the product (sizes, stock history and photo rows go with it) and its photos from Blob. */
+export async function deleteProductAction(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = await assertAdmin().catch(() => null);
+  if (!admin) return { ok: false, error: "Нет доступа. Войдите как администратор." };
+
+  const product = await prisma.product.findUnique({ where: { id }, select: { images: { select: { url: true } } } });
+  if (!product) return { ok: false, error: "Товар не найден." };
+
+  try {
+    await prisma.product.delete({ where: { id } });
+  } catch (err) {
+    console.error("deleteProduct failed", err);
+    return { ok: false, error: "Не удалось удалить товар. Попробуйте ещё раз." };
+  }
+
+  // the row is gone, so a failed Blob delete can not break the store: it is only logged
+  await deleteProductImages(product.images.map((i) => i.url));
+  updateTag(PRODUCTS_TAG);
+  return { ok: true };
 }

@@ -281,6 +281,7 @@ export function ProductForm({ initial }: { initial?: ProductFormInitial }) {
             <ImageField
               key={view}
               label={VIEWS[view]}
+              folder={v.type.toLowerCase() as "top" | "bottom" | "footwear"}
               required={isTop ? true : isBottom ? view !== "folded" : i === 0}
               value={v.images[view]}
               error={errors[`images.${view}`]}
