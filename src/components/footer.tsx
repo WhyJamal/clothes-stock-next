@@ -3,6 +3,7 @@ import { Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PAGES } from "@/config/pages.config";
 import { FOOTER } from "@/components/footer.config";
+import { CONTACTS } from "@/config/contacts.config";
 import { STORE } from "@/config/store.config";
 
 export function Footer() {
@@ -18,11 +19,11 @@ export function Footer() {
             Контакты
           </p>
           <a
-            href="mailto:hello@shimitsu.example"
+            href={`mailto:${CONTACTS.email}`}
             className="mt-2 inline-flex items-center gap-2 text-xs text-neutral-700 underline-offset-4 hover:underline"
           >
             <Mail className="size-3.5" />
-            hello@shimitsu.example
+            {CONTACTS.email}
           </a>
         </div>
 

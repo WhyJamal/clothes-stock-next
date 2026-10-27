@@ -14,6 +14,7 @@ export const FOOTER = {
         { label: "Доставка", href: "#" },
         { label: "Возврат", href: "#" },
         { label: "Таблица размеров", href: "#" },
+        { label: "Контакты", href: "/contacts" },
       ],
     },
     {

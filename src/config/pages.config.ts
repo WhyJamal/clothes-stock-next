@@ -1,6 +1,7 @@
 export const PAGES = {
   HOME: "/",
   SHOWCASE: "/showcase",
+  CONTACTS: "/contacts",
 
   ADMIN: "/admin",
   ADMIN_PRODUCTS: "/admin/products",
