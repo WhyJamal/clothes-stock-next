@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
 import { SHELF_ROWS } from "@/config/catalog.config";
 import { useDragScroll } from "@/hooks/use-drag-scroll";
+import { usePressHold } from "@/hooks/use-press-hold";
 import { discountPercent, totalStock } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
@@ -55,7 +56,7 @@ export function ProductShelf({ products, className }: Props) {
               Стойка с обувью
             </h2>
           </div>
-          <p className="max-w-xs text-xs leading-relaxed text-neutral-500">Листайте ряды вбок, нажмите на пару, чтобы рассмотреть</p>
+          <p className="max-w-xs text-xs leading-relaxed text-neutral-500">Листайте ряды вбок, удерживайте пару, чтобы приподнять, нажмите, чтобы рассмотреть</p>
         </div>
 
         {rows.length === 0 ? (
@@ -118,10 +119,15 @@ function ShoeCard({
   const soldOut = totalStock(product) === 0;
   const discount = discountPercent(product);
 
+  // on a phone: holding a finger on the pair does what the mouse pointer resting on it does
+  const [lifted, setLifted] = useState(false);
+  const hold = usePressHold({ onStart: () => setLifted(true), onEnd: () => setLifted(false) });
+
   return (
     <button
       type="button"
-      className="group block w-(--shoe-w) cursor-pointer pt-7 text-left outline-none [--ped-top:clamp(22px,2.4vw,30px)] [--sink:1.5]"
+      {...hold}
+      className="group block w-(--shoe-w) cursor-pointer pt-7 text-left outline-none select-none [-webkit-touch-callout:none] [--ped-top:clamp(22px,2.4vw,30px)] [--sink:1.5]"
       onClick={(e) => onOpen(product, e.currentTarget.querySelector<HTMLElement>("[data-photo]")!.getBoundingClientRect())}
     >
       {/* the shoe */}
@@ -129,6 +135,7 @@ function ShoeCard({
         data-photo
         className={cn(
           "relative z-20 aspect-4/3 w-full origin-bottom transition duration-500 ease-out group-hover:-translate-y-3 group-hover:scale-[1.05] group-focus-visible:-translate-y-3 group-focus-visible:scale-[1.05]",
+          lifted && "-translate-y-3 scale-[1.05]",
           hidden && "opacity-0 transition-none",
           soldOut && "opacity-60",
         )}
@@ -141,7 +148,8 @@ function ShoeCard({
             sizes="300px"
             unoptimized
             draggable={false}
-            className="object-contain object-bottom"
+            // pointer-events-none: the finger touches the button, so the phone offers no "save image"
+            className="pointer-events-none object-contain object-bottom"
           />
         ) : (
           <ShoePlaceholder className="absolute inset-0 size-full" />
@@ -171,6 +179,7 @@ function ShoeCard({
           <div
             className={cn(
               "absolute top-1/2 left-1/2 h-[48%] w-[72%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-900/35 blur-[6px] transition duration-500 group-hover:scale-x-75 group-hover:opacity-50 group-focus-visible:scale-x-75 group-focus-visible:opacity-50",
+              lifted && "scale-x-75 opacity-50",
               hidden && "opacity-0 transition-none",
             )}
           />

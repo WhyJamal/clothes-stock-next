@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
 import { useDragScroll } from "@/hooks/use-drag-scroll";
+import { usePressHold } from "@/hooks/use-press-hold";
 import { discountPercent, mainImage, totalStock } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,7 @@ export function BottomsShelf({ products, className }: { products: BottomProduct[
             </h2>
           </div>
           <p className="max-w-xs text-xs leading-relaxed text-neutral-500">
-            Наведите на стопку, чтобы увидеть вещь спереди, нажмите, чтобы открыть
+            Наведите на стопку (на телефоне удерживайте палец), чтобы увидеть вещь спереди, нажмите, чтобы открыть
           </p>
         </div>
 
@@ -202,6 +203,9 @@ function Stack({
     if (r) onHover({ product, box: previewBox(r) });
   };
 
+  // on a phone: holding a finger on the stack is the same as the mouse pointer resting on it
+  const hold = usePressHold({ onStart: show, onEnd: () => onHover(null) });
+
   return (
     <div
       // put on the shelf one after another; once it stands, no transform is left (so the photo can melt into the wall)
@@ -213,13 +217,14 @@ function Stack({
     >
       <button
         type="button"
+        {...hold}
         aria-label={`${product.name}, ${formatPrice(product.price)}`}
         onPointerEnter={(e) => e.pointerType === "mouse" && show()}
         onPointerLeave={() => onHover(null)}
         onFocus={(e) => e.currentTarget.matches(":focus-visible") && show()}
         onBlur={() => onHover(null)}
         onClick={() => photoRef.current && onOpen(product, photoRef.current.getBoundingClientRect())}
-        className="relative block w-(--stack-w) cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+        className="relative block w-(--stack-w) cursor-pointer rounded-md outline-none select-none [-webkit-touch-callout:none] focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
       >
         <div ref={photoRef} className={cn("relative aspect-5/4 w-full", hidden && "opacity-0", soldOut && "opacity-60")}>
           {/* where the stack touches the board */}
@@ -233,7 +238,8 @@ function Stack({
               unoptimized
               draggable={false}
               // multiply: a photo with a white background melts into the wall
-              className="object-contain object-bottom mix-blend-multiply"
+              // pointer-events-none: the finger touches the button, so the phone offers no "save image"
+              className="pointer-events-none object-contain object-bottom mix-blend-multiply"
             />
           )}
         </div>
