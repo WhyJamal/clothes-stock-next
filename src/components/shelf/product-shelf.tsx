@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
 import { SHELF_ROWS } from "@/config/catalog.config";
-import { useDragScroll } from "@/hooks/use-drag-scroll";
+
+import {
+  motion,
+  type AnimationPlaybackControls,
+} from "motion/react";
+
 import { usePressHold } from "@/hooks/use-press-hold";
 import { discountPercent, totalStock } from "@/lib/catalog";
 import { formatPrice } from "@/lib/products";
@@ -86,22 +91,185 @@ function ShelfRow({
   hiddenId: string | null;
   onOpen: (product: FootwearProduct, rect: DOMRect) => void;
 }) {
-  const { ref, bind } = useDragScroll<HTMLUListElement>();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLUListElement>(null);
+  const [hovered, setHovered] = useState<FootwearProduct | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  const drag = useRef({
+    down: false,
+    moved: 0,
+    lastX: 0,
+    id: -1,
+    suppressClick: false,
+  });
+
+  const widthRef = useRef(0);
+  const offsetRef = useRef(0);
+  const animationRef = useRef<AnimationPlaybackControls | null>(null);
+
+  const repeated = useMemo(
+    () => [...products, ...products, ...products],
+    [products],
+  );
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const track = trackRef.current;
+    if (!root || !track || products.length === 0) return;
+
+    const measure = () => {
+      const children = Array.from(track.children) as HTMLElement[];
+      if (children.length < products.length * 2) return;
+
+      const first = children[0].getBoundingClientRect();
+      const nextCycle = children[products.length].getBoundingClientRect();
+
+      widthRef.current = nextCycle.left - first.left;
+      offsetRef.current = -widthRef.current;
+
+      track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
+      setProgress(0);
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(root);
+
+    return () => observer.disconnect();
+  }, [products, repeated.length]);
+
+  const normalize = useCallback((value: number) => {
+    const cycle = widthRef.current;
+    if (!cycle) return value;
+
+    let next = value;
+    while (next <= -cycle * 2) next += cycle;
+    while (next > -cycle) next -= cycle;
+
+    return next;
+  }, []);
+
+  const moveTo = useCallback((value: number) => {
+    const track = trackRef.current;
+    const cycle = widthRef.current;
+    if (!track || !cycle) return;
+
+    const next = normalize(value);
+    offsetRef.current = next;
+    track.style.transform = `translate3d(${next}px, 0, 0)`;
+
+    const pct = ((-next - cycle) / cycle) * 100;
+    setProgress(Math.max(0, Math.min(100, pct)));
+  }, [normalize]);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    animationRef.current?.stop();
+
+    drag.current = {
+      down: true,
+      moved: 0,
+      lastX: e.clientX,
+      id: e.pointerId,
+      suppressClick: false,
+    };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d.down) return;
+
+    const dx = e.clientX - d.lastX;
+    d.lastX = e.clientX;
+    d.moved += Math.abs(dx);
+
+    if (d.moved > 6) {
+      d.suppressClick = true;
+      moveTo(offsetRef.current + dx);
+    }
+  };
+
+  const endDrag = () => {
+    const d = drag.current;
+    if (!d.down) return;
+
+    d.down = false;
+  };
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || !widthRef.current) return;
+
+      const delta =
+        Math.abs(e.deltaX) > Math.abs(e.deltaY)
+          ? e.deltaX
+          : e.deltaY;
+
+      if (!delta) return;
+
+      e.preventDefault();
+      moveTo(offsetRef.current - delta);
+    };
+
+    root.addEventListener("wheel", onWheel, { passive: false });
+    return () => root.removeEventListener("wheel", onWheel);
+  }, [moveTo]);
 
   return (
-    <ul
-      ref={ref}
-      {...bind}
-      aria-label={label}
-      className="scrollbar-none relative flex cursor-grab touch-pan-x gap-8 overflow-x-auto px-8 pb-2 select-none active:cursor-grabbing mask-[linear-gradient(to_right,transparent,#000_4%,#000_96%,transparent)]"
-    >
-      {/* auto margins on the first and last pair: a short row is centred, a long one starts at the left */}
-      {products.map((p) => (
-        <li key={p.id} className="shrink-0 first:ml-auto last:mr-auto">
-          <ShoeCard product={p} hidden={hiddenId === p.id} onOpen={onOpen} />
-        </li>
-      ))}
-    </ul>
+    <div className="relative">
+      <div
+        ref={rootRef}
+        role="region"
+        aria-label={label}
+        className="relative cursor-grab touch-pan-y overflow-hidden select-none active:cursor-grabbing"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={() => setHovered(null)}
+        onClickCapture={(e) => {
+          if (drag.current.suppressClick) {
+            e.preventDefault();
+            e.stopPropagation();
+            drag.current.suppressClick = false;
+            drag.current.moved = 0;
+          }
+        }}
+      >
+        <ul
+          ref={trackRef}
+          className="flex w-max items-start gap-8 px-8 select-none will-change-transform"
+        >
+          {repeated.map((p, i) => (
+            <li key={`${p.id}-${i}`} className="shrink-0">
+              <div
+                onPointerEnter={() => setHovered(p)}
+                className="pointer-events-auto"
+              >
+                <ShoeCard
+                  product={p}
+                  hidden={hiddenId === p.id}
+                  onOpen={onOpen}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="relative mx-auto mb-1 h-0.75 w-28 shrink-0 overflow-hidden rounded-full bg-neutral-200 -bottom-6">
+        <motion.div
+          className="absolute left-0 top-0 h-full rounded-full bg-neutral-800"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
   );
 }
 

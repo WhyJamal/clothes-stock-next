@@ -89,7 +89,7 @@ export function BottomsShelf({ products, className }: { products: BottomProduct[
         </div>
 
         {rows.length === 0 && (
-          <p className="mt-8 rounded-3xl bg-[#f1f0f3] px-6 py-16 text-center text-sm text-neutral-400">
+          <p className="mt-8 px-6 py-16 text-center text-sm text-neutral-400">
             Нижняя одежда скоро появится.
           </p>
         )}
@@ -143,7 +143,7 @@ function ShelfRow({
   return (
     <ul ref={ref} {...bind} aria-label={label} className="scrollbar-none cursor-grab touch-pan-x overflow-x-auto select-none active:cursor-grabbing">
       {/* the inner box is as wide as the stacks, but never narrower than the screen: the board spans all of it */}
-      <li className="relative flex w-max min-w-full list-none items-end gap-5 px-8 pt-4 pb-0">
+      <li className="relative flex w-max min-w-full list-none items-end gap-5 px-8 pt-4 pb-0 overflow-y-hidden">
         <Board />
         {products.map((p) => (
           <div key={p.id} className="shrink-0 pb-[calc(var(--board-front)+var(--board-top)*0)] first:ml-auto last:mr-auto">
