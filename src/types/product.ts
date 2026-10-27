@@ -48,16 +48,23 @@ type ProductBase<T extends ProductType> = {
   variants: Variant<T>[];
 };
 
-/** Clothes on the rail need all three photos: the side is shown first, the front on hover. */
-type HangingImages = { images: Record<ViewKey, string> };
+/** Photos of a product: the views in `R` must exist, any other view may exist. */
+type Photos<R extends ViewKey> = { images: Record<R, string> & Partial<Record<ViewKey, string>> };
+
+/** Tops on the rail need three photos: the side is shown first, the front on hover. */
+type TopImages = Photos<"front" | "side" | "back">;
+
+/** Bottoms lie on the display table: flat front and back are required, the folded photo is shown first when it exists. */
+type BottomImages = Photos<"front" | "back">;
 
 /** Shoes need no photo to exist: a placeholder is shown until the photos are added. */
 type FootwearImages = { images: Partial<Record<ViewKey, string>> };
 
-export type TopProduct = ProductBase<"TOP"> & HangingImages;
-export type BottomProduct = ProductBase<"BOTTOM"> & HangingImages;
+export type TopProduct = ProductBase<"TOP"> & TopImages;
+export type BottomProduct = ProductBase<"BOTTOM"> & BottomImages;
 export type FootwearProduct = ProductBase<"FOOTWEAR"> & FootwearImages;
 
+/** Clothes (tops and bottoms). The rail shows only `TopProduct`. */
 export type HangingProduct = TopProduct | BottomProduct;
 
 /** What the pages and components work with. `product.type` narrows the rest. */

@@ -26,7 +26,8 @@ export function ProductCard({ product, priority }: { product: Product; priority?
     if (r) quickView.open(product, { left: r.left, top: r.top, width: r.width, height: r.height });
   };
 
-  const imageClass = "object-contain p-3 transition-opacity duration-500";
+  // a bottom photo may have a white background: multiply melts it into the tile
+  const imageClass = cn("object-contain p-3 transition-opacity duration-500", product.type === "BOTTOM" && "mix-blend-multiply");
 
   return (
     <button type="button" onClick={open} className="group block w-full cursor-pointer text-left outline-none">

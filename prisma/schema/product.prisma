@@ -57,10 +57,12 @@ enum ProductStatus {
 }
 
 /// Which side of the product a photo shows. For shoes SIDE is the main photo.
+/// FOLDED: the item folded in a stack (shown on the display table; used for bottoms).
 enum ImageView {
   FRONT
   SIDE
   BACK
+  FOLDED
 }
 
 model Product {

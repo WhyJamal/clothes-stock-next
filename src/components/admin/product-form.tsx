@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Gender, ProductStatus, ProductType } from "@/generated/prisma/enums";
 import type { ProductFormInitial, ProductFormValues, ProductPayload, ViewKey } from "@/types";
 
-const VIEWS = { front: "Спереди", side: "Сбоку", back: "Сзади" };
+const VIEWS = { front: "Спереди", side: "Сбоку", back: "Сзади", folded: "Сложено" };
 
 const DEFAULTS: ProductFormValues = {
   slug: "",
@@ -93,8 +93,10 @@ export function ProductForm({ initial }: { initial?: ProductFormInitial }) {
   const [pending, startTransition] = useTransition();
 
   const existing = initial?.sizes ?? {};
-  const hanging = v.type !== ProductType.FOOTWEAR;
-  const views: ViewKey[] = hanging ? ["front", "side", "back"] : ["side", "front", "back"];
+  const isTop = v.type === ProductType.TOP;
+  const isBottom = v.type === ProductType.BOTTOM;
+  // tops: three photos for the rail; bottoms: flat front and back + the folded photo for the table; shoes: the side first
+  const views: ViewKey[] = isTop ? ["front", "side", "back"] : isBottom ? ["front", "back", "folded"] : ["side", "front", "back"];
 
   const set = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) =>
     setV((prev) => ({ ...prev, [key]: value }));
@@ -273,13 +275,13 @@ export function ProductForm({ initial }: { initial?: ProductFormInitial }) {
         </div>
       </Section>
 
-      <Section title="Фото" hint={hanging ? "Для вещей на рейле нужны все три фото: сбоку, спереди и сзади (лучше PNG или WebP без фона)." : "Главное фото обуви: вид сбоку носком вправо (лучше PNG или WebP без фона). Остальные по желанию."}>
+      <Section title="Фото" hint={isTop ? "Для вещей на рейле нужны все три фото: сбоку, спереди и сзади (лучше PNG или WebP без фона)." : isBottom ? "Нижняя одежда лежит на столе: нужны фото спереди и сзади (вещь разложена плашмя). Фото «Сложено» (стопкой) показывается на столе первым, лучше добавить его." : "Главное фото обуви: вид сбоку носком вправо (лучше PNG или WebP без фона). Остальные по желанию."}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {views.map((view, i) => (
             <ImageField
               key={view}
               label={VIEWS[view]}
-              required={hanging || i === 0}
+              required={isTop ? true : isBottom ? view !== "folded" : i === 0}
               value={v.images[view]}
               error={errors[`images.${view}`]}
               onBusy={(busy) => setUploads((n) => n + (busy ? 1 : -1))}

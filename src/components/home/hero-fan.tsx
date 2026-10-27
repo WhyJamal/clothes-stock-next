@@ -49,7 +49,7 @@ function FanCard({ product, slot }: { product: Product; slot: number }) {
           priority
           sizes="(min-width: 1024px) 22vw, 40vw"
           unoptimized
-          className="object-contain p-4 pb-16"
+          className={cn("object-contain p-4 pb-16", product.type === "BOTTOM" && "mix-blend-multiply")}
         />
       )}
       <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] backdrop-blur">

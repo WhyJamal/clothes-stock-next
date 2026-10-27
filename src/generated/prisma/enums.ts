@@ -62,7 +62,8 @@ export type ProductStatus = (typeof ProductStatus)[keyof typeof ProductStatus]
 export const ImageView = {
   FRONT: 'FRONT',
   SIDE: 'SIDE',
-  BACK: 'BACK'
+  BACK: 'BACK',
+  FOLDED: 'FOLDED'
 } as const
 
 export type ImageView = (typeof ImageView)[keyof typeof ImageView]

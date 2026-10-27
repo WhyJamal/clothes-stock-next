@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import { ShowcaseTabs } from "@/components/showcase-tabs";
-import { isFootwear, isHanging } from "@/lib/catalog";
+import { isBottom, isFootwear, isTop } from "@/lib/catalog";
 import { getProducts } from "@/lib/product-queries";
 
 export const metadata: Metadata = { title: "Shimitsu · Витрина", description: "Листайте рейл, наведите на вещь, чтобы развернуть её, нажмите, чтобы открыть." };
 
 export default async function Showcase() {
   const products = await getProducts();
-  const hanging = products.filter(isHanging);
-  const tops = hanging.filter((p) => p.type === "TOP");
-  const bottoms = hanging.filter((p) => p.type === "BOTTOM");
+  const tops = products.filter(isTop);
+  const bottoms = products.filter(isBottom);
   const shoes = products.filter(isFootwear);
 
   return (

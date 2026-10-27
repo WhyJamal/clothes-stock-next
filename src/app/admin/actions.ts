@@ -7,7 +7,7 @@ import { PRODUCTS_TAG } from "@/lib/product-queries";
 import { createProductInputSchema } from "@/lib/product-schema";
 import { prisma } from "@/lib/prisma";
 import { changeStock, StockError } from "@/lib/stock";
-import { StockMovementType } from "@/generated/prisma/enums";
+import { StockMovementType, type ImageView } from "@/generated/prisma/enums";
 import type { ProductPayload, SaveProductResult, StockActionInput, StockActionResult, ViewKey } from "@/types";
 
 // Every action checks the admin again: the layout check protects pages, not these calls.
@@ -17,7 +17,7 @@ const sku = (slug: string, size: string) => `${slug}-${size}`.toUpperCase();
 const imageRows = (images: Partial<Record<ViewKey, string>>, alt: string) =>
   (Object.entries(images) as [ViewKey, string | undefined][])
     .filter((e): e is [ViewKey, string] => Boolean(e[1]))
-    .map(([view, url]) => ({ view: view.toUpperCase() as "FRONT" | "SIDE" | "BACK", url, alt }));
+    .map(([view, url]) => ({ view: view.toUpperCase() as ImageView, url, alt }));
 
 const firstStock = (stock: number, userId: string) =>
   stock > 0

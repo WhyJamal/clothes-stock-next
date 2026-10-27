@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { SceneRail, type SelectInfo } from "@/components/scene-rail/scene-rail";
 import { useQuickView } from "@/components/quick-view/quick-view-provider";
-import type { HangingProduct } from "@/types";
+import type { TopProduct } from "@/types";
 
 type Props = {
-  products: HangingProduct[];
+  products: TopProduct[];
   className?: string;
   /** Slow automatic drift in px per second (the home page uses it). */
   drift?: number;
@@ -19,7 +19,7 @@ export function Storefront({ products, className, drift, showBar }: Props) {
   // The garment that is open in the card disappears from the rail until the card is closed.
   const [hiddenIndex, setHiddenIndex] = useState<number | null>(null);
 
-  const open = (product: HangingProduct, { itemIndex, rect }: SelectInfo) => {
+  const open = (product: TopProduct, { itemIndex, rect }: SelectInfo) => {
     setHiddenIndex(itemIndex);
     quickView.open(
       product,

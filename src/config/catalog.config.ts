@@ -48,15 +48,15 @@ export const ALL_CATEGORIES_LISTED: ProductCategory extends ListedCategory ? tru
 /** Order of the types in menus and on the home page. */
 export const TYPE_ORDER = [ProductType.TOP, ProductType.BOTTOM, ProductType.FOOTWEAR] as const;
 
-/** Types that hang on the rail. Footwear stands on the shelf. */
+/** Clothes types. Tops hang on the rail, bottoms lie folded on the table, footwear stands on the shelf. */
 export const HANGING_TYPES = [ProductType.TOP, ProductType.BOTTOM] as const;
 
 /** Photos shown in the product card, in tab order. Missing photos are skipped. */
 export const DETAIL_VIEWS = {
   [ProductType.TOP]: ["front", "back"],
-  [ProductType.BOTTOM]: ["front", "back"],
+  [ProductType.BOTTOM]: ["front", "back", "folded"],
   [ProductType.FOOTWEAR]: ["side", "front", "back"],
-} as const satisfies Record<ProductType, readonly ("front" | "side" | "back")[]>;
+} as const satisfies Record<ProductType, readonly ("front" | "side" | "back" | "folded")[]>;
 
 /** Shoe shelf: how many rows the shoes are spread over. */
 export const SHELF_ROWS = 1;

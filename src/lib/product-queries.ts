@@ -3,7 +3,7 @@ import { isSizeOf, sizeIndex } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { ProductStatus } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
-import type { Product, Variant, ViewKey } from "@/types";
+import type { BottomProduct, Product, TopProduct, Variant, ViewKey } from "@/types";
 
 /** Every cached query below carries this tag: call updateTag(PRODUCTS_TAG) after changing products. */
 export const PRODUCTS_TAG = "products";
@@ -49,20 +49,20 @@ export function toProduct(row: Row): Product | null {
   switch (row.type) {
     case "TOP":
       if (!images.front || !images.side || !images.back) break;
-      return { ...base, type: "TOP", variants: variants as Variant<"TOP">[], images: images as Record<ViewKey, string> };
+      return { ...base, type: "TOP", variants: variants as Variant<"TOP">[], images: images as TopProduct["images"] };
     case "BOTTOM":
-      if (!images.front || !images.side || !images.back) break;
+      if (!images.front || !images.back) break;
       return {
         ...base,
         type: "BOTTOM",
         variants: variants as Variant<"BOTTOM">[],
-        images: images as Record<ViewKey, string>,
+        images: images as BottomProduct["images"],
       };
     case "FOOTWEAR":
       return { ...base, type: "FOOTWEAR", variants: variants as Variant<"FOOTWEAR">[], images };
   }
 
-  console.warn(`[products] ${row.slug}: clothes need front, side and back photos, skipped`);
+  console.warn(`[products] ${row.slug}: tops need front, side and back photos, bottoms need front and back, skipped`);
   return null;
 }
 

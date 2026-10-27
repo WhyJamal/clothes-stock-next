@@ -1,5 +1,6 @@
 import { CATEGORIES_BY_TYPE, LOW_STOCK, SIZE_CHART, TYPE_ORDER } from "@/config/catalog.config";
 import type {
+  BottomProduct,
   FootwearProduct,
   HangingProduct,
   Product,
@@ -7,11 +8,14 @@ import type {
   ProductType,
   SizeOf,
   StockLevel,
+  TopProduct,
   TypeSummary,
   ViewKey,
 } from "@/types";
 
 export const isHanging = (p: Product): p is HangingProduct => p.type !== "FOOTWEAR";
+export const isTop = (p: Product): p is TopProduct => p.type === "TOP";
+export const isBottom = (p: Product): p is BottomProduct => p.type === "BOTTOM";
 export const isFootwear = (p: Product): p is FootwearProduct => p.type === "FOOTWEAR";
 
 /** Is `size` one of the sizes allowed for `type`? Narrows the size. */
@@ -29,9 +33,11 @@ export function categoryBelongsTo(type: ProductType, category: ProductCategory) 
   return (CATEGORIES_BY_TYPE[type] as readonly ProductCategory[]).includes(category);
 }
 
-/** The photo to show in lists: the front for clothes, the side for shoes. */
+/** The photo to show in lists: the front for tops, the folded one (else the front) for bottoms, the side for shoes. */
 export function mainImage(p: Product): string | null {
-  return isFootwear(p) ? (p.images.side ?? p.images.front ?? null) : p.images.front;
+  if (isFootwear(p)) return p.images.side ?? p.images.front ?? null;
+  if (p.type === "BOTTOM") return p.images.folded ?? p.images.front;
+  return p.images.front;
 }
 
 export const imageOf = (p: Product, view: ViewKey): string | null => p.images[view] ?? null;

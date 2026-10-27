@@ -15,7 +15,7 @@ import {
 } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/products";
-import type { HangingProduct } from "@/types";
+import type { TopProduct } from "@/types";
 import { RailItem } from "./rail-item";
 import {
   clamp,
@@ -34,9 +34,9 @@ export type SelectInfo = {
 };
 
 type Props = {
-  products: HangingProduct[];
+  products: TopProduct[];
   /** Called when a garment is clicked (not dragged). */
-  onSelect?: (product: HangingProduct, info: SelectInfo) => void;
+  onSelect?: (product: TopProduct, info: SelectInfo) => void;
   /** Rendered item that is currently opened in the product detail (hidden on the rail). */
   hiddenIndex?: number | null;
   /** Slow automatic drift in px per second (stops while the pointer is over the rail). 0 = off. */

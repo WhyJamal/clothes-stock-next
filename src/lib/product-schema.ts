@@ -41,6 +41,7 @@ export function createProductInputSchema({ requireImages = true }: { requireImag
         front: z.string().min(1).optional(),
         side: z.string().min(1).optional(),
         back: z.string().min(1).optional(),
+        folded: z.string().min(1).optional(),
       }),
       variants: z
         .array(
@@ -85,9 +86,15 @@ export function createProductInputSchema({ requireImages = true }: { requireImag
       }
 
       if (requireImages && p.type !== ProductType.FOOTWEAR) {
-        for (const view of ["front", "side", "back"] as const) {
+        // tops hang on the rail (3 photos), bottoms lie on the table (flat front and back, the folded one is optional)
+        const needed = p.type === ProductType.TOP ? (["front", "side", "back"] as const) : (["front", "back"] as const);
+        for (const view of needed) {
           if (!p.images[view]) {
-            ctx.addIssue({ code: "custom", path: ["images", view], message: "Для активной вещи нужны все три фото." });
+            ctx.addIssue({
+              code: "custom",
+              path: ["images", view],
+              message: needed.length === 3 ? "Для активной вещи нужны все три фото." : "Для активной вещи нужны фото спереди и сзади.",
+            });
           }
         }
       }

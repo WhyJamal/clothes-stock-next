@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import { formatPriceShort } from "@/lib/products";
-import type { HangingProduct } from "@/types";
+import type { TopProduct } from "@/types";
 import {
   HOOK_DROP,
   IMG_TOP,
@@ -16,7 +16,7 @@ import {
 
 type Props = {
   index: number;
-  product: HangingProduct;
+  product: TopProduct;
   /** Current layout (for static sizes). */
   layout: RailLayout;
   /** Same layout as a motion value, so transforms can follow resizes. */

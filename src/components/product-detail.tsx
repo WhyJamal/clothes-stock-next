@@ -13,7 +13,7 @@ import { formatPrice } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import type { AnyVariant, Box, Product, ViewKey } from "@/types";
 
-const VIEWS = { front: "Спереди", side: "Сбоку", back: "Сзади" };
+const VIEWS = { front: "Спереди", side: "Сбоку", back: "Сзади", folded: "Сложено" };
 
 const SIZE_LABEL = { TOP: "Размер", BOTTOM: "Размер (талия)", FOOTWEAR: "Размер (EU)" };
 
