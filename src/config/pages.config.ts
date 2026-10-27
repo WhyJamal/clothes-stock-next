@@ -12,3 +12,6 @@ export const PAGES = {
   SIGNIN: "/auth/sign-in",
   SIGNUP: "/auth/sign-up",
 } as const;
+
+/** Page of one product, by its slug (the readable id from the database). */
+export const productHref = (slug: string) => `/product/${slug}`;

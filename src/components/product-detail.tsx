@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { Loader2, X } from "lucide-react";
 import { ShoePlaceholder } from "@/components/shelf/shoe-placeholder";
 import { Button } from "@/components/ui/button";
 import { DETAIL_VIEWS, LOW_STOCK } from "@/config/catalog.config";
+import { productHref } from "@/config/pages.config";
 import { discountPercent, imageOf, isFootwear } from "@/lib/catalog";
 import { CATEGORY_LABEL, GENDER_LABEL } from "@/lib/labels";
 import { formatPrice } from "@/lib/products";
@@ -197,9 +199,9 @@ export function ProductDetail({ product, origin, onClose, onAddToCart }: Props) 
 
           <div className="mt-6 flex items-center justify-between border-t border-neutral-200 pt-4 text-xs text-neutral-600">
             <span>{product.color}</span>
-            <a href="#" className="underline-offset-4 hover:underline">
+            <Link href={productHref(product.slug)} onClick={onClose} className="underline-offset-4 hover:underline">
               Страница товара
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>
