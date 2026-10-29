@@ -5,7 +5,6 @@ import { motion, useSpring, useTransform, type MotionValue } from "motion/react"
 import { formatPriceShort } from "@/lib/products";
 import type { TopProduct } from "@/types";
 import {
-  HOOK_DROP,
   IMG_TOP,
   MAX_HOVER_SCALE,
   itemX,
@@ -79,7 +78,8 @@ export function RailItem({
   const frontOpacity = useTransform(p, (v) => smoothstep(0.2, 0.65, v));
 
   const { itemW, itemH } = layout;
-  const imgTop = HOOK_DROP - IMG_TOP * itemH;
+  // The hook is drawn in the image: lift the image so its hook top sits on the rail.
+  const imgTop = -IMG_TOP * itemH;
   const sizes = `${Math.round(itemW * 1.5)}px`;
 
   return (
@@ -123,26 +123,10 @@ export function RailItem({
           </motion.div>
         </motion.div>
 
-        {/* metal hook looped over the rail + price tag on a thread */}
-        <svg
-          className="absolute overflow-visible"
-          style={{ left: -12, top: -12 }}
-          width={24}
-          height={HOOK_DROP + 24}
-          viewBox={`-12 -12 24 ${HOOK_DROP + 24}`}
-          fill="none"
-        >
-          <path
-            d={`M0 ${HOOK_DROP + 8} V8 A8 8 0 1 0 -8 0`}
-            stroke="#6d6f78"
-            strokeWidth={1.6}
-            strokeLinecap="round"
-          />
-          <path d="M0 24 L9 29" stroke="#55575f" strokeWidth={0.8} strokeLinecap="round" />
-        </svg>
+        {/* price tag */}
         <span
           className="absolute rounded-xs bg-white px-1.5 py-px text-[9px] font-semibold leading-none text-neutral-800 shadow-[0_1px_4px_rgba(0,0,0,0.18)]"
-          style={{ left: 7, top: 27, transform: "rotate(-9deg)", transformOrigin: "0 0" }}
+          style={{ left: 1, top: itemH * 0.03, transform: "rotate(-9deg)", transformOrigin: "0 0" }}
         >
           {formatPriceShort(product.price)}
         </span>

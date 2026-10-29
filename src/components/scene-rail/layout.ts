@@ -15,8 +15,8 @@ export type RailLayout = {
   y0: number;
 };
 
-export const HOOK_DROP = 44; // px between the rail and the top of the garment
-export const IMG_TOP = 40 / 1200; // garment top inside the 900x1200 canvas
+/** Where the top of the hanger hook sits inside the image (fraction of image height). The hook is part of the picture now, so this point is placed on the rail. */
+export const IMG_TOP = 0.15;
 export const MAX_HOVER_SCALE = 1.42;
 
 export const clamp = (v: number, min: number, max: number) =>
@@ -65,7 +65,7 @@ export const railY = (x: number, l: RailLayout) => {
   return l.y0 + 4 * l.sag * t * (1 - t);
 };
 
-/** SVG path of the rail, sampled from the same formula the hooks use. */
+/** SVG path of the rail, sampled from the same formula the garments use. */
 export function railPath(l: RailLayout) {
   const pad = 60;
   const steps = 48;
